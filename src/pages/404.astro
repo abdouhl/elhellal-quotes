@@ -21,86 +21,41 @@ const browseLinks = [
     ogSiteName="اقتباسات الهلال"
     noindex
 >
-    <main id="main-content" class="container not-found">
-        <div class="not-found-content">
-            <p class="not-found-code" aria-hidden="true">٤٠٤</p>
-            <h1 class="nu-c-h5 nu-u-text--primary">هذه الصفحة غير موجودة</h1>
-            <p class="nu-c-fs-normal nu-u-text--secondary not-found-message">
-                ربما تم نقل الرابط أو حذفه، أو أنك كتبت العنوان بشكل غير صحيح.
-                تصفّح الاقتباسات حسب الكاتب أو الكتاب أو الموضوع.
-            </p>
-
-            <div class="btn-group not-found-actions">
-                <a href="/" class="submit-btn">العودة للرئيسية</a>
-                <a href="/authors/" class="submit-btn">تصفح الكتّاب</a>
-            </div>
-
-            <div class="not-found-categories">
-                <h2 class="nu-c-fs-small nu-u-text--secondary not-found-categories-title">
-                    تصفّح الاقتباسات
-                </h2>
-                <ul class="not-found-categories-list">
-                    {browseLinks.map((link) => (
-                        <li>
-                            <a href={link.href} class="nu-u-link--subtle">
-                                {link.title}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+    <main id="main-content" class="page not-found">
+        <p class="not-found-code" aria-hidden="true">٤٠٤</p>
+        <h1 class="page-title">هذه الصفحة غير موجودة</h1>
+        <p class="page-lede">
+            ربما تم نقل الرابط أو حذفه، أو أنك كتبت العنوان بشكل غير صحيح.
+            تصفّح الاقتباسات حسب الكاتب أو الكتاب أو الموضوع.
+        </p>
+        <div class="not-found-actions">
+            <a href="/" class="btn btn--primary">العودة للرئيسية</a>
+            {browseLinks.map((link) => (
+                <a href={link.href} class="btn">{link.title}</a>
+            ))}
         </div>
     </main>
 </Layout>
 
 <style>
     .not-found {
-        display: flex;
-        justify-content: center;
-        padding: var(--spacing-10) var(--spacing-06) var(--spacing-15);
-    }
-
-    .not-found-content {
+        max-width: 40rem;
+        padding-block: clamp(48px, 10vw, 120px);
         text-align: center;
-        max-width: 34rem;
     }
-
     .not-found-code {
-        font-size: clamp(3.5rem, 12vw, 6rem);
-        line-height: 1;
+        margin: 0 0 8px;
+        font-family: var(--font-quote);
+        font-size: clamp(4rem, 14vw, 7rem);
         font-weight: 700;
+        line-height: 1.1;
         color: var(--accent);
-        margin: 0 0 var(--spacing-04);
-        font-variant-numeric: tabular-nums;
     }
-
-    .not-found-message {
-        max-width: 28rem;
-        margin: var(--spacing-04) auto var(--spacing-06);
-    }
-
     .not-found-actions {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .not-found-categories {
-        margin-top: var(--spacing-10);
-        padding-top: var(--spacing-06);
-        border-top: 0.5px solid var(--border-muted);
-    }
-
-    .not-found-categories-title {
-        margin-bottom: var(--spacing-04);
-    }
-
-    .not-found-categories-list {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: var(--spacing-03) var(--spacing-05);
-        list-style: none;
-        padding: 0;
-        margin: 0;
+        gap: 10px;
+        margin-top: 32px;
     }
 </style>

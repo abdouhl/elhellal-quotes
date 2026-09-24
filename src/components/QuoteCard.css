@@ -1,399 +1,256 @@
-.quote-card {
+/* ─────────────────────────────────────────────────────────────
+   Quote card (masonry) — the quote is set in the book face (Amiri),
+   short quotes get a poster-sized treatment, long ones step down.
+   ───────────────────────────────────────────────────────────── */
+.qcard {
     position: relative;
-    padding: 28px 22px 16px;
-    justify-content: space-between;
-    min-height: 260px;
-    background-color: #111111;
-    border-radius: 12px;
-    box-shadow:
-        0px 0px 0px 0.5px rgba(255, 255, 255, 0.08),
-        0px 4px 16px rgba(0, 0, 0, 0.4);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform 0.25s cubic-bezier(.2,.7,.3,1), box-shadow 0.25s ease;
+}
+.qcard:is(:hover, :focus-within) {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
 }
 
-.quote-card:is(:hover, :focus-within) {
-    transform: translateY(-2px);
-    box-shadow:
-        0px 0px 0px 1px rgba(255, 255, 255, 0.15),
-        0px 8px 24px rgba(0, 0, 0, 0.5);
+/* ── Tones: each re-scopes the tokens so text, byline and actions follow ── */
+.qcard--night,
+.qcard--emerald,
+.qcard--wine,
+.qcard--clay,
+.qcard--indigo {
+    --ink: #fbf6ec;
+    --ink-2: rgba(251, 246, 236, 0.78);
+    --ink-3: rgba(251, 246, 236, 0.6);
+    --line: rgba(255, 255, 255, 0.16);
+    --surface-2: rgba(255, 255, 255, 0.12);
+    --accent: #f1c979;
+    --accent-soft: rgba(241, 201, 121, 0.16);
+    border-color: transparent;
+}
+.qcard--night {
+    background:
+        radial-gradient(1px 1px at 18% 20%, rgba(255,255,255,.6) 50%, transparent 51%),
+        radial-gradient(1px 1px at 82% 34%, rgba(255,255,255,.45) 50%, transparent 51%),
+        radial-gradient(1px 1px at 64% 78%, rgba(255,255,255,.35) 50%, transparent 51%),
+        radial-gradient(80% 70% at 0% 0%, rgba(230,183,92,.18), transparent 60%),
+        linear-gradient(160deg, #13203a, #0a1222);
+}
+.qcard--emerald { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.1), transparent 60%), linear-gradient(160deg, #175a4c, #0d3a31); }
+.qcard--wine    { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.1), transparent 60%), linear-gradient(160deg, #7a2439, #4a1022); }
+.qcard--clay    { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.14), transparent 60%), linear-gradient(160deg, #c2643a, #8f3b1c); }
+.qcard--indigo  { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.1), transparent 60%), linear-gradient(160deg, #34408f, #1c2360); }
+.qcard--sand {
+    --ink: #2b1d0c;
+    --ink-2: #5e4a31;
+    --ink-3: #8a7456;
+    --line: rgba(80, 55, 20, 0.16);
+    --surface-2: rgba(80, 55, 20, 0.08);
+    --accent: #9a5b0e;
+    border-color: transparent;
+    background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.5), transparent 60%), linear-gradient(160deg, #f3e4c4, #e6cfa1);
 }
 
-.quote-card-body {
+.qcard-body {
+    position: relative;
     display: block;
-    text-decoration: none;
-    padding: 0;
-    margin: 0;
+    padding: 30px 28px 22px;
     color: inherit;
+    text-align: center;
+    text-decoration: none;
+}
+.qcard-body:hover { color: inherit; }
+
+.qcard-mark {
+    display: block;
+    height: 40px;
+    margin-bottom: 6px;
+    font-family: var(--font-quote);
+    font-size: 76px;
+    line-height: 1;
+    color: var(--accent);
 }
 
-/* ── Action bar: copy text, copy link, share to WhatsApp/X/Facebook ──
-   Quietly visible at rest (so touch devices without :hover can find it),
-   brightens fully on hover/focus, BrainyQuote-style. ── */
-.quote-actions {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 2;
+.qcard-text {
+    margin: 0;
+    font-family: var(--font-quote);
+    color: var(--ink);
+    text-wrap: balance;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.qcard--xl .qcard-text { font-size: 1.95rem; line-height: 1.6; font-weight: 700; }
+.qcard--lg .qcard-text { font-size: 1.5rem; line-height: 1.75; font-weight: 700; }
+.qcard--md .qcard-text { font-size: 1.22rem; line-height: 1.9; -webkit-line-clamp: 8; }
+.qcard--sm .qcard-text { font-size: 1.1rem; line-height: 1.95; -webkit-line-clamp: 9; }
+.qcard--xl .qcard-body { padding-block: 40px 30px; }
+
+.qcard-foot {
     display: flex;
     align-items: center;
-    gap: 6px;
-    opacity: 0.55;
-    transform: translateY(-2px);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    gap: 10px;
+    margin-top: auto;
+    padding: 14px 20px 16px;
+    border-top: 1px solid var(--line);
 }
-.quote-card:is(:hover, :focus-within) .quote-actions {
-    opacity: 1;
-    transform: translateY(0);
+.qcard-avatar { display: block; flex-shrink: 0; }
+.qcard-avatar .avatar { box-shadow: 0 0 0 2px var(--line-strong, var(--line)); }
+.qcard-byline {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    line-height: 1.35;
+}
+.qcard-name {
+    font-family: var(--font-ui-bold);
+    font-size: 14px;
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.qcard-name:hover { color: var(--accent); }
+.qcard-book {
+    font-size: 12px;
+    color: var(--ink-3);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+a.qcard-book:hover { color: var(--accent); }
+
+/* ── Action bar: copy text, copy link, share to WhatsApp / X / Facebook ──
+   Hidden until hover/focus on pointer devices; always visible on touch. */
+.quote-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease;
+}
+@media (hover: hover) {
+    .qcard .quote-actions,
+    .qrow .quote-actions { opacity: 0; }
+    .qcard:is(:hover, :focus-within) .quote-actions,
+    .qrow:is(:hover, :focus-within) .quote-actions { opacity: 1; }
+}
+/* Cards are narrow — on touch, keep only copy + WhatsApp so the byline has room. */
+@media (hover: none) {
+    .qcard .quote-action-btn:nth-child(2),
+    .qcard .quote-action-btn--x,
+    .qcard .quote-action-btn--facebook { display: none; }
 }
 
 .quote-action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     padding: 0;
-    background: rgba(255, 255, 255, 0.06);
-    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    border: 0;
     border-radius: 50%;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--ink-3);
     cursor: pointer;
     text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
-.quote-action-btn:hover {
-    background: rgba(255, 140, 0, 0.18);
-    color: DarkOrange;
-    transform: scale(1.08);
-}
-.quote-action-btn--done {
-    color: #4ade80;
-    background: rgba(74, 222, 128, 0.14);
-}
-.quote-action-btn--whatsapp:hover {
-    background: rgba(37, 211, 102, 0.18);
-    color: #25d366;
-}
-.quote-action-btn--x:hover {
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
-}
-.quote-action-btn--facebook:hover {
-    background: rgba(24, 119, 242, 0.18);
-    color: #1877f2;
-}
+.quote-action-btn:hover { background: var(--surface-2); color: var(--accent); }
+.quote-action-btn--done,
+.quote-action-btn--done:hover { color: #2f9e5b; }
+.quote-action-btn--whatsapp:hover { color: #1faa54; }
+.quote-action-btn--facebook:hover { color: #1877f2; }
+.quote-action-btn--x:hover { color: var(--ink); }
 
-@media (max-width: 640px) {
-    .quote-actions {
-        opacity: 0.8;
-    }
-}
-
-/* ── Author-quote card: bold quote mark, same flat shell as the article card ── */
-.quote-mark {
-    position: absolute;
-    top: 2px;
-    right: 16px;
-    font-size: 68px;
-    line-height: 1;
-    font-family: Georgia, 'Times New Roman', serif;
-    background: linear-gradient(180deg, rgba(255, 166, 64, 0.4), rgba(255, 140, 0, 0.08));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    pointer-events: none;
-}
-
-.quote-text {
-    margin: 22px 0 14px;
-    padding: 0;
-    border: none;
-    color: #f5f0ea;
-    font-weight: 700;
-    line-height: 1.65;
-    text-align: right;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    transition: color 0.15s ease;
-}
-
-/* Auto-sizing tiers (BrainyQuote-style): the shorter the quote, the bigger and
-   bolder its treatment — a one-liner gets a poster-sized font instead of
-   looking lost in a card built for a paragraph. */
-.quote-text-xl { font-size: 23px; line-height: 1.55; -webkit-line-clamp: 4; }
-.quote-text-lg { font-size: 19px; line-height: 1.6; -webkit-line-clamp: 5; }
-.quote-text-md { font-size: 16.5px; line-height: 1.7; -webkit-line-clamp: 5; }
-.quote-text-sm { font-size: 14px; line-height: 1.65; font-weight: 600; -webkit-line-clamp: 7; }
-
-.quote-card:is(:hover, :focus-within) .quote-text {
-    color: #ffffff;
-}
-
-.quote-topics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
-}
-.quote-topic {
-    padding: 2px 9px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.45);
-    border-radius: 20px;
-    font-family: var(--monospace);
-    font-size: 10px;
-}
-
-.quote-attribution {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding-top: 14px;
-    margin-top: auto;
-    border-top: 0.5px solid rgba(255, 255, 255, 0.08);
-}
-
-.quote-author-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-    background: var(--background-selected);
-    box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.35);
-}
-.quote-author-avatar--sm {
-    width: 26px;
-    height: 26px;
-    box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.35);
-}
-
-.quote-author-avatar-fallback {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: DarkOrange;
-    background: rgba(255, 140, 0, 0.12);
-    font-weight: 700;
-    font-size: 14px;
-}
-
-.quote-attribution-text {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-}
-
-.quote-author {
-    font-family: var(--monospace);
-    font-size: 12.5px;
-    font-weight: 700;
-    color: DarkOrange;
-    text-decoration: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.quote-author:hover {
-    color: #ff9d33;
-}
-
-.quote-kind {
-    font-family: var(--monospace);
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.35);
-}
-
-/* ── Book-quote card: cover art + badge, same DarkOrange identity as the article card ── */
-.quote-book-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.quote-book-thumb {
-    width: 40px;
-    height: 58px;
-    object-fit: cover;
-    border-radius: 3px;
-    flex-shrink: 0;
-    box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.12);
-}
-.quote-book-thumb-fallback {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 140, 0, 0.12);
-    font-size: 18px;
-}
-
-.quote-book-heading {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-.quote-book-badge {
-    align-self: flex-start;
-    padding: 2px 8px;
-    background: rgba(255, 80, 0, 0.2);
-    border: 0.5px solid rgba(255, 80, 0, 0.3);
-    color: #ff7a40;
-    border-radius: 10px;
-    font-family: var(--monospace);
-    font-size: 10px;
-    font-weight: 700;
-}
-.quote-book-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #f5f0ea;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.quote-text--book {
-    margin: 16px 0 14px;
-}
-/* Book cards spend more header space on the cover/title, so each size tier
-   runs a notch smaller than its author-card counterpart to still fit. */
-.quote-card--book .quote-text-xl { font-size: 20px; line-height: 1.5; -webkit-line-clamp: 3; }
-.quote-card--book .quote-text-lg { font-size: 17px; line-height: 1.55; -webkit-line-clamp: 4; }
-.quote-card--book .quote-text-md { font-size: 15px; line-height: 1.6; -webkit-line-clamp: 4; }
-.quote-card--book .quote-text-sm { font-size: 13px; line-height: 1.6; -webkit-line-clamp: 6; }
-
-.quote-attribution--book {
-    gap: 8px;
-}
-.quote-author--book {
-    color: DarkOrange;
-    flex: 1;
-    min-width: 0;
-}
-.quote-author--book:hover {
-    color: #ff9d33;
-}
-.quote-book-link {
-    flex-shrink: 0;
-    font-family: var(--monospace);
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
-    text-decoration: none;
-}
-.quote-book-link:hover {
-    color: DarkOrange;
-}
-
-/* ── Dense list rows (quotes.net-style) — used on author/book/tag listing
-   pages instead of the illustrated card grid: plain quote text + a byline,
-   grouped into one bordered box like the article page's core-sections. ── */
+/* ─────────────────────────────────────────────────────────────
+   Reading-list rows (author / book / tag pages)
+   ───────────────────────────────────────────────────────────── */
 .quote-row-list {
-    display: flex;
-    flex-direction: column;
-    list-style: none;
     margin: 0;
     padding: 0;
-    background: var(--background-secondary);
-    border: 0.5px solid var(--border-muted);
-    border-radius: 12px;
-    overflow: hidden;
+    list-style: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
 }
 
-.quote-row {
-    padding: var(--spacing-05) var(--spacing-06);
-    border-bottom: 0.5px solid var(--border-muted);
-    transition: background 0.15s ease;
+.qrow {
+    position: relative;
+    padding: 28px clamp(20px, 4vw, 44px);
+    border-top: 1px solid var(--line);
 }
-.quote-row:last-child {
-    border-bottom: none;
+/* Rows are wrapped in <astro-island>s, so :first-child has to look through them. */
+.quote-row-list > :first-child .qrow,
+.quote-row-list > .qrow:first-child { border-top: 0; }
+.qrow::before {
+    content: "";
+    position: absolute;
+    inset-block: 28px;
+    inset-inline-start: 0;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.15s ease;
 }
-.quote-row:hover {
-    background: rgba(255, 255, 255, 0.02);
-}
+.qrow:hover::before { opacity: 1; }
 
-.quote-row-text-link {
+.qrow-link {
     display: block;
-    text-decoration: none;
     color: inherit;
+    text-decoration: none;
 }
+.qrow-link:hover { color: inherit; }
+.qrow-text {
+    margin: 0;
+    font-family: var(--font-quote);
+    color: var(--ink);
+    text-wrap: pretty;
+}
+.qrow-text-xl { font-size: clamp(1.45rem, 2.6vw, 1.75rem); line-height: 1.65; font-weight: 700; }
+.qrow-text-lg { font-size: clamp(1.3rem, 2.2vw, 1.5rem); line-height: 1.75; font-weight: 700; }
+.qrow-text-md { font-size: 1.25rem; line-height: 1.9; }
+.qrow-text-sm { font-size: 1.15rem; line-height: 1.95; }
 
-.quote-row-text {
-    margin: 0 0 var(--spacing-03);
-    padding-inline-start: 14px;
-    border-inline-start: 3px solid DarkOrange;
-    font-size: var(--desktop-body);
-    line-height: 1.8;
-    color: #f0ede8;
-    font-weight: 500;
-    transition: color 0.15s ease;
-}
-.quote-row:hover .quote-row-text {
-    color: #ffffff;
-}
-
-.quote-row-footer {
+.qrow-foot {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--spacing-03);
-    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 14px;
 }
-
-.quote-row-meta {
+.qrow-meta {
     display: flex;
     align-items: center;
-    gap: 6px;
     flex-wrap: wrap;
-    font-family: var(--monospace);
-    font-size: var(--desktop-caption);
-    color: var(--content-secondary);
+    gap: 6px 14px;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--ink-3);
 }
-.quote-row-author {
-    color: DarkOrange;
-    font-weight: 700;
-    text-decoration: none;
-}
-.quote-row-author:hover {
-    color: #ff9d33;
-}
-.quote-row-sep {
-    opacity: 0.5;
-}
-.quote-row-book {
-    color: #2dd4bf;
-    text-decoration: none;
-}
-.quote-row-book:hover {
-    color: #5eead4;
-}
-.quote-row-tags {
-    display: flex;
+.qrow-author {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    margin-inline-start: 4px;
+    font-family: var(--font-ui-bold);
+    font-size: 14px;
+    color: var(--ink);
+    text-decoration: none;
 }
-.quote-row-tag {
-    color: rgba(255, 255, 255, 0.35);
-}
-
-/* The shared QuoteActions bar floats over a card by default; inside a row it
-   sits inline in the footer instead. */
-.quote-row .quote-actions {
-    position: static;
-    opacity: 0.5;
-    transform: none;
-}
-.quote-row:is(:hover, :focus-within) .quote-actions {
-    opacity: 1;
-}
-
-@media (max-width: 640px) {
-    .quote-row .quote-actions {
-        opacity: 0.8;
-    }
-}
+.qrow-author:hover { color: var(--accent); }
+.qrow-book { color: var(--ink-2); text-decoration: none; }
+a.qrow-book:hover { color: var(--accent); }
+.qrow-tags { display: inline-flex; flex-wrap: wrap; gap: 10px; }

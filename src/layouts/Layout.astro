@@ -2,14 +2,7 @@
 import { ViewTransitions } from "astro:transitions";
 import WebSiteSchema from "../components/schema/WebSiteSchema.astro";
 import "@new-ui/foundations";
-
-const headerDate = new Date().toLocaleDateString('ar-SA', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-});
-const headerDateISO = new Date().toISOString().split('T')[0];
+import "../styles/global.css";
 
 const DEFAULT_OG_IMAGE = "https://elhellal.com/og-image.jpg";
 
@@ -56,10 +49,17 @@ const {
     noindex = false,
     twitterCreator = "@abdou_hll",
 } = Astro.props;
+
+const path = Astro.url.pathname;
+const navLinks = [
+    { href: "/authors/", label: "الكتّاب", active: path.startsWith("/authors") },
+    { href: "/books/", label: "الكتب", active: path.startsWith("/book") },
+    { href: "/tags/", label: "المواضيع", active: path.startsWith("/tag") },
+];
 ---
 
 <!doctype html>
-<html lang="ar" dir="rtl" data-new-ui-theme="dark">
+<html lang="ar" dir="rtl">
     
     <head>
         <!-- Google Funding Choices (ad-blocking recovery / Offerwall consent) — must load as early as possible in <head>, unprocessed and unbundled -->
@@ -93,10 +93,13 @@ const {
         <link rel="icon" type="image/svg+xml" href="/xarticles.svg" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#0b1324" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#050a15" media="(prefers-color-scheme: dark)" />
         <link rel="preload" href="/woffs/ROM-Regular.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="/woffs/ROM-Bold.woff2" as="font" type="font/woff2" crossorigin />
-        <link rel="preload" href="/woffs/ROM-Mono.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
         <meta name="generator" content={Astro.generator} />
         <title>
             {
@@ -173,27 +176,18 @@ const {
     <body>
         <a href="#main-content" class="skip-link">التخطي إلى المحتوى الرئيسي</a>
 
-        <header class="site-header" aria-label="رأس الصفحة">
+        <header class="site-header theme-night">
             <div class="site-header-inner">
-                <div class="site-header-top">
-                    <time class="header-date" datetime={headerDateISO}>{headerDate}</time>
-
-                    <div class="header-brand">
-                        <a href="/" class="brand-link" aria-label="الصفحة الرئيسية">
-                            <img
-                                src="/xarticles.svg"
-                                width="44"
-                                height="44"
-                                alt=""
-                                aria-hidden="true"
-                            />
-                            <span class="brand-name">{site}</span>
-                        </a>
-                        <p class="brand-tagline">{tagline}</p>
-                    </div>
-
-                    <div class="header-actions">
-                        <div class="social-links">
+                <a href="/" class="brand-link" aria-label="الهلال — الصفحة الرئيسية للاقتباسات">
+                    <img src="/xarticles.svg" width="30" height="30" alt="" aria-hidden="true" />
+                    <span class="brand-name">الهلال <span>اقتباسات</span></span>
+                </a>
+                <nav class="site-nav" aria-label="التنقل الرئيسي">
+                    {navLinks.map((l) => (
+                        <a href={l.href} aria-current={l.active ? "page" : undefined}>{l.label}</a>
+                    ))}
+                </nav>
+                <div class="social-links">
                             <a
                                 href="https://www.pinterest.com/elhellalcom/"
                                 class="social-link"
@@ -216,615 +210,46 @@ const {
                                     <path d="M16.6 5.82c-1.007-.98-1.671-2.152-1.913-3.53H12.35v13.75c0 1.94-1.578 3.517-3.517 3.517a3.52 3.52 0 0 1-3.518-3.517 3.52 3.52 0 0 1 3.518-3.517c.35 0 .687.052 1.006.148V9.315a6.156 6.156 0 0 0-1.006-.083C5.128 9.232 2 12.36 2 16.164 2 19.967 5.128 23.1 8.833 23.1c3.704 0 6.833-3.132 6.833-6.936V9.398a9.128 9.128 0 0 0 5.334 1.712V8.363a5.98 5.98 0 0 1-4.4-2.543z"/>
                                 </svg>
                             </a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </header>
 
         <slot />
 
-        <footer class="footer" aria-label="Site footer">
-            <nav class="footer-nav" aria-label="تذييل الصفحة">
-                <a href="/authors/" class="nu-u-link--subtle">الكتّاب</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="/books/" class="nu-u-link--subtle">الكتب</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="/tags/" class="nu-u-link--subtle">المواضيع</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="https://elhellal.com/" class="nu-u-link--subtle">الهلال — المقالات</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="https://books.elhellal.com/" class="nu-u-link--subtle">ملخصات الكتب</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="https://elhellal.com/privacy/" class="nu-u-link--subtle">الخصوصية</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="https://elhellal.com/terms/" class="nu-u-link--subtle">الشروط</a>
-                <span class="footer-separator" aria-hidden="true">·</span>
-                <a href="/sitemap-index.xml" class="nu-u-link--subtle">خريطة الموقع</a>
-            </nav>
-            <p class="footer-copy">
-                ABDERAHMANE HELLAL 2026 ©
-                <a
-                    href="https://elhellal.com/"
-                    class="nu-u-link--subtle"
-                    target="_blank"
-                    rel="noopener noreferrer">@abdou_hll</a
-                >
-            </p>
+        <footer class="footer theme-night">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <a href="/" class="brand-link">
+                        <img src="/xarticles.svg" width="30" height="30" alt="" aria-hidden="true" />
+                        <span class="brand-name">الهلال <span>اقتباسات</span></span>
+                    </a>
+                    <p>{tagline}</p>
+                </div>
+                <nav class="footer-col" aria-label="تصفح">
+                    <h2>تصفّح</h2>
+                    <ul>
+                        <li><a href="/authors/">الكتّاب</a></li>
+                        <li><a href="/books/">الكتب</a></li>
+                        <li><a href="/tags/">المواضيع</a></li>
+                    </ul>
+                </nav>
+                <nav class="footer-col" aria-label="شبكة الهلال">
+                    <h2>الهلال</h2>
+                    <ul>
+                        <li><a href="https://elhellal.com/">المقالات</a></li>
+                        <li><a href="https://books.elhellal.com/">ملخصات الكتب</a></li>
+                        <li><a href="https://elhellal.com/privacy/">الخصوصية</a></li>
+                        <li><a href="https://elhellal.com/terms/">الشروط</a></li>
+                    </ul>
+                </nav>
+                <p class="footer-copy">
+                    <span>ABDERAHMANE HELLAL 2026 © <a href="https://elhellal.com/" target="_blank" rel="noopener noreferrer">@abdou_hll</a></span>
+                    <a href="/sitemap-index.xml">خريطة الموقع</a>
+                </p>
+            </div>
         </footer>
     </body>
 </html>
-<style is:global>
-    @font-face {
-        font-family: "ROM-Regular";
-        src: url("/woffs/ROM-Regular.woff2") format("woff2");
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-    }
-    @font-face {
-        font-family: "ROM-Bold";
-        src: url("/woffs/ROM-Bold.woff2") format("woff2");
-        font-weight: bold;
-        font-style: normal;
-        font-display: swap;
-    }
-    @font-face {
-        font-family: "ROM-Mono";
-        src: url("/woffs/ROM-Mono.woff2") format("woff2");
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-    }
-    :root {
-        --accent: var(--link);
-        --body-copy: "ROM-Regular", var(--system-ui);
-        --monospace: "ROM-Mono", var(--monospace-code);
-        --body-strong: "ROM-Bold", var(--system-ui);
-        font-synthesis: none;
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-
-        --c-text:
-            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' height='24' width='24'%3E%3Cpath fill='black' d='M9 4H11V5H9V4ZM12 6H11V5H12V6ZM13 6H12V18H11V19H9V20H11V19H12V18H13V19H14V20H16V19H14V18H13V6ZM14 5V6H13V5H14ZM14 5V4H16V5H14Z' clip-rule='evenodd' fill-rule='evenodd'/%3E%3Cpath fill='white' d='M15 3H16V4H15H14V3H15ZM14 5V4H13V5H12V4H11V3H10H9V4H8V5H9V6H10H11V18H10H9V19H8V20H9V21H10H11V20H12V19H13V20H14V21H15H16V20H17V19H16V18H15H14V6H15H16V5H17V4H16V5H15H14ZM13 6V5H14V6H13ZM13 18V6H12V5H11V4H10H9V5H10H11V6H12V18H11V19H10H9V20H10H11V19H12V18H13ZM13 18V19H14V20H15H16V19H15H14V18H13Z' clip-rule='evenodd' fill-rule='evenodd'/%3E%3C/svg%3E")
-                16 16,
-            auto;
-        --c-pointer:
-            url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9 4H11V5H9V4ZM9 10V8V5H8V8V10H6V11H5V13H6V14H7V16H8V17H9V18H10V20H11H12H13H14V19H15H16V20H17V19H18V17H19V15H20V10H19V9H18H17V8H15H14V7H12V5H11V8V10H12V8H14V10H15V9H17V11H18V10H19V15H18V17H17V13H16V17H17V18V19H16V18H14V19H13H12H11V18H10V17H9V16H8V13H7H6V11H8V12H9V13H10V12V10H9ZM9 10H8V11H9V10ZM14 13H15V17H14V13ZM13 13H12V17H13V13Z' fill='black'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9 5H11V8V10H12V8H14V10H15V9H17V10V11H18V10H19V15H18V17H17V13H16V17H17V18V19H16V18H14V19H13H12H11V18H10V17H9V16H8V13H6V11H8V12H9V13H10V12V10H9V8V5ZM12 13V17H13V13H12ZM14 13V17H15V13H14Z' fill='white'/%3E%3C/svg%3E")
-                10 5,
-            pointer;
-        --c-arrow:
-            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' height='24' width='24'%3E%3Cpath fill='black' d='M9 5H8V16H9V15H10V14H11V15H12V17H13V19H14H15V17H14V15H13V13H14H15H16V12H15V11H14V10H13V9H12V8H11V7H10V6H9V5Z' clip-rule='evenodd' fill-rule='evenodd'/%3E%3Cpath fill='white' d='M8 4H9V5H8V4ZM8 16H7V5H8V16ZM9 16V17H8V16H9ZM10 15V16H9V15H10ZM11 15H10V14H11V15ZM12 17H11V16V15H12V16V17ZM13 19H12V18V17H13V18V19ZM15 19V20H14H13V19H14H15ZM15 17H16V18V19H15V18V17ZM14 15H15V16V17H14V16V15ZM13 14V15H14V14H16V13H17V12H16V11H15V10H14V9H13V8H12V7H11V6H10V5H9V6H10V7H11V8H12V9H13V10H14V11H15V12H16V13H13V14Z' clip-rule='evenodd' fill-rule='evenodd'/%3E%3C/svg%3E")
-                12 12,
-            text;
-        --c-grab:
-            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' height='24' width='24'%3E%3Cpath fill='black' d='M13 4H11V5H10V6H9V5H7V6H6V8H7V10H5V11H4V13H5V14H6V16H7V17H8V18H9V20H10H11H12H13V19H14H15V20H16V19H17V17H18V15H19V12H20V8H19V7H18V8H17V6H16V5H14H13V4ZM13 5V10H14V6H16V11H17V9H18V8H19V12H18V15H17V17H16V13H15V17H16V19H15V18H14H13V19H12H11H10V18H9V17H8V16H7V14H6V13H5V11H7V12H8V13H9V10H8V8H7V6H9V8H10V10H11V5H13ZM8 10V11H7V10H8ZM14 13H13V17H14V13ZM11 13H12V17H11V13Z' clip-rule='evenodd' fill-rule='evenodd'/%3E%3Cpath fill='white' d='M13 5H11V10H10V8H9V6H7V8H8V10H9V12V13H8V12H7V11H5V13H6V14H7V16H8V17H9V18H10V19H11H12H13V18H15V19H16V18V17H17V15H18V12H19V8H18V9H17V11H16V10V6H14V10H13V5ZM14 13H13V17H14V13ZM12 13H11V17H12V13ZM16 13H15V17H16V13Z' clip-rule='evenodd' fill-rule='evenodd'/%3E%3C/svg%3E")
-                12 12,
-            grab;
-    }
-    html[data-new-ui-theme*="dark"] {
-        --link: DarkOrange;
-        --link-hover: DarkOrange;
-        --link-visited: DarkOrange;
-        --border-focus: DarkOrange;
-    }
-
-    html {
-        font-family: var(--body-copy);
-        background-color: var(--background-high-contrast);
-        cursor: var(--c-arrow);
-    }
-    body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        overflow-x: hidden;
-    }
-    
-    /* Skip link for accessibility */
-    .skip-link {
-        position: absolute;
-        top: -100px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: var(--spacing-01) var(--spacing-02);
-        background-color: var(--background-high-contrast);
-        color: var(--content-secondary-alt);
-        text-decoration: none;
-        font-weight: 600;
-        border-radius: var(--spacing-00);
-        z-index: 9999999;
-        transition: top 0.2s ease;
-        font-size: var(--desktop-caption);
-        line-height: var(--lh-desktop-caption);
-    }
-    
-    .skip-link:focus {
-        top: var(--spacing-03);
-    }
-    p,
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    li,
-    pre,
-    code,
-    strong,
-    dl,
-    dt {
-        cursor: var(--c-text);
-    }
-
-    a,
-    a * {
-        cursor: var(--c-pointer);
-    }
-
-    main {
-        margin: var(--spacing-09);
-    }
-    .container {
-        margin: var(--spacing-15) var(--spacing-09);
-    }
-    section {
-        margin-bottom: var(--spacing-10);
-    }
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        font-family: "ROM-Bold", var(--system-ui);
-        font-weight: 500;
-    }
-    p {
-        margin-top: var(--spacing-00);
-    }
-    .nu-u-link--subtle {
-        color: var(--content-secondary) !important;
-    }
-    .site-header {
-        border-bottom: 0.5px solid var(--border-muted);
-    }
-
-    .site-header-inner {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: var(--spacing-08) var(--spacing-09) 0;
-    }
-
-    .site-header-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: var(--spacing-04);
-        padding-bottom: var(--spacing-06);
-    }
-
-    .header-date {
-        font-family: var(--monospace);
-        font-size: var(--desktop-caption);
-        line-height: var(--lh-desktop-caption);
-        color: var(--content-secondary);
-        flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .header-brand {
-        flex: 0 0 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .brand-link {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-03);
-        text-decoration: none;
-        color: inherit;
-    }
-
-    .brand-name {
-        font-family: "ROM-Bold", var(--system-ui);
-        font-size: 1.75rem;
-        line-height: 1.2;
-        color: var(--content-primary);
-    }
-
-    .brand-tagline {
-        font-family: var(--monospace);
-        font-size: var(--desktop-caption);
-        line-height: var(--lh-desktop-caption);
-        color: var(--content-secondary);
-        margin: var(--spacing-01) 0 0 0;
-    }
-
-    .header-actions {
-        flex: 1;
-        display: flex;
-        gap: var(--spacing-03);
-        align-items: center;
-        justify-content: flex-end;
-    }
-
-    .social-links {
-        display: flex;
-        gap: var(--spacing-02);
-        align-items: center;
-        margin-right: var(--spacing-03);
-    }
-
-    .social-link {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: var(--spacing-08);
-        height: var(--spacing-08);
-        color: var(--content-secondary);
-        border-radius: var(--spacing-00);
-        transition:
-            color 0.2s ease,
-            transform 0.1s ease;
-    }
-
-    .social-link:hover {
-        color: var(--accent);
-    }
-
-    .social-link:active {
-        transform: scale(0.9);
-    }
-
-    .social-link:focus {
-        outline: 1px solid var(--button-primary);
-        outline-offset: 2px;
-    }
-
-    .header-search-row {
-        padding: var(--spacing-04) 0 var(--spacing-05);
-        border-top: 0.5px solid var(--border-muted);
-        display: flex;
-        justify-content: center;
-    }
-
-    .header-search-row .search-container {
-        margin-top: 0;
-        width: 100%;
-        max-width: 36rem;
-    }
-
-    .header-search-row .search-input-wrapper {
-        max-width: 100%;
-    }
-
-    .btn-group {
-        display: flex;
-        gap: var(--spacing-03);
-        align-items: center;
-    }
-    .submit-btn {
-        padding: var(--spacing-02) var(--spacing-05);
-        border: 0.5px solid var(--border-muted);
-        outline: none;
-        text-decoration: none;
-        color: inherit;
-        color: var(--content-secondary);
-        background-color: var(--background);
-        border-radius: var(--spacing-00);
-        font-size: var(--desktop-body-sm);
-        line-height: var(--lh-desktop-body-sm);
-        transition: transform 0.2s ease;
-
-        &:hover {
-            background-color: var(--background);
-            color: var(--accent);
-        }
-
-        &:active {
-            background-color: var(--background);
-            color: var(--content-secondary);
-            transform: scale(0.97);
-        }
-
-        &.disabled {
-            background-color: var(--background);
-            color: var(--content-secondary);
-            pointer-events: none;
-        }
-
-        &:focus {
-            background-color: var(--background);
-            outline: 1px solid var(--button-primary);
-            color: var(--content-secondary);
-        }
-    }
-    .new-filter-toggle {
-        z-index: 999;
-        width: var(--spacing-08);
-        height: var(--spacing-08);
-        background: none;
-        border: none;
-        padding: var(--spacing-00);
-        cursor: var(--c-pointer);
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: var(--spacing-00);
-        transition: transform 0.1s ease;
-        position: relative;
-        margin-right: var(--spacing-03);
-    }
-
-    .new-filter-toggle .fire-emoji {
-        font-size: 1.25rem;
-        transition:
-            transform 0.2s ease,
-            filter 0.2s ease;
-        filter: grayscale(100%);
-        opacity: 0.6;
-    }
-
-    .new-filter-toggle:hover .fire-emoji {
-        transform: scale(1.1);
-        filter: grayscale(0%);
-        opacity: 1;
-    }
-
-    .new-filter-toggle[aria-pressed="true"] .fire-emoji {
-        filter: grayscale(0%);
-        opacity: 1;
-    }
-
-    .new-filter-toggle:focus {
-        outline: 1px solid var(--button-primary);
-        outline-offset: 2px;
-    }
-
-    .favorites-link {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-02);
-        padding: var(--spacing-02) var(--spacing-05);
-        border: 0.5px solid var(--border-muted);
-        background-color: var(--background);
-        color: var(--content-secondary);
-        text-decoration: none;
-        font-size: var(--desktop-body-sm);
-        line-height: var(--lh-desktop-body-sm);
-        border-radius: var(--spacing-00);
-        outline: none;
-        transition: transform 0.2s ease;
-    }
-
-    .favorites-link:hover {
-        background-color: var(--background);
-        color: var(--accent);
-    }
-
-    .favorites-link:active {
-        background-color: var(--background);
-        color: var(--content-secondary);
-        transform: scale(0.97);
-    }
-
-    .favorites-link:focus {
-        background-color: var(--background);
-        outline: 1px solid var(--button-primary);
-        color: var(--content-secondary);
-    }
-
-    .favorites-link svg {
-        flex-shrink: 0;
-    }
-
-    .favorites-count {
-        display: none;
-    }
-
-    @media (max-width: 48rem) {
-        .favorites-text {
-            display: none;
-        }
-
-        .favorites-count {
-            display: inline;
-        }
-    }
-
-    /* Footer */
-    .footer {
-        padding-bottom: var(--spacing-10);
-        text-align: center;
-    }
-
-    .footer-nav {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        gap: var(--spacing-01);
-        margin-bottom: var(--spacing-03);
-    }
-
-    .footer-nav a {
-        font-family: var(--monospace);
-        font-size: var(--desktop-caption);
-        line-height: var(--lh-desktop-caption);
-        text-decoration: none;
-        transition: color 0.15s ease;
-    }
-
-    .footer-nav a:hover {
-        color: var(--accent) !important;
-    }
-
-    .footer-copy {
-        font-family: var(--monospace);
-        font-size: var(--desktop-caption);
-        line-height: var(--lh-desktop-caption);
-        color: var(--content-secondary);
-        margin: 0;
-    }
-
-    .footer-separator {
-        color: var(--content-secondary);
-        font-family: var(--monospace);
-        font-size: var(--desktop-caption);
-        opacity: 0.4;
-    }
-
-    /* Empty state styles */
-    .empty-state {
-        text-align: center;
-        padding: var(--spacing-15) var(--spacing-06);
-        max-width: 40rem;
-        margin: 0 auto;
-    }
-
-    .empty-state h2 {
-        margin-top: var(--spacing-04);
-        margin-bottom: var(--spacing-03);
-    }
-
-    .back-home-btn {
-        padding: var(--spacing-03) var(--spacing-06);
-        background-color: var(--accent);
-        color: var(--background);
-        text-decoration: none;
-        font-weight: 600;
-        border-radius: var(--spacing-00);
-        transition: filter 0.2s ease;
-    }
-
-    .back-home-btn:hover {
-        filter: brightness(1.1);
-    }
-
-    /* Favorites page styles */
-    .favorites-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-06);
-        flex-wrap: wrap;
-        gap: var(--spacing-04);
-    }
-
-    .sort-select {
-        padding: var(--spacing-02) var(--spacing-04);
-        border: 0.5px solid var(--border-muted);
-        background-color: var(--background);
-        color: var(--content-secondary);
-        font-size: var(--desktop-body-sm);
-        line-height: var(--lh-desktop-body-sm);
-        border-radius: var(--spacing-00);
-        cursor: var(--c-pointer);
-    }
-
-    .sort-select:hover {
-        background-color: var(--background-secondary);
-        border-color: var(--border);
-    }
-
-    .sort-select:focus {
-        outline: 2px solid var(--border-focus);
-        outline-offset: 2px;
-    }
-
-    @media (max-width: 48rem) {
-        .header-date {
-            display: none;
-        }
-        .header-actions {
-            flex: 0 0 auto;
-        }
-        .brand-name {
-            font-size: 1.35rem;
-        }
-        /* Let the brand shrink and the tagline wrap so the header never
-           outgrows the viewport (which makes iOS Safari zoom the page out). */
-        .header-brand {
-            flex: 1 1 0;
-            min-width: 0;
-        }
-        .brand-tagline {
-            white-space: normal;
-            max-width: 100%;
-        }
-    }
-
-    @media (max-width: 30rem) {
-        main {
-            margin: auto var(--spacing-06);
-        }
-        .site-header-inner {
-            padding: var(--spacing-05) var(--spacing-05) 0;
-        }
-        .container {
-            margin: var(--spacing-06);
-        }
-    }
-
-    .legal-content-wrapper {
-        max-width: 45rem;
-        margin: 0 auto;
-        padding: var(--spacing-09);
-        border: 0.5px solid var(--border-muted);
-    }
-
-    .legal-header {
-        margin-bottom: var(--spacing-08);
-        border-bottom: 0.5px solid var(--border-muted);
-        padding-bottom: var(--spacing-04);
-    }
-
-    .legal-header h1 {
-        margin: 0 0 var(--spacing-02) 0;
-    }
-
-    .last-updated {
-        font-family: var(--monospace);
-        font-size: var(--desktop-caption);
-        color: var(--content-secondary-alt);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin: 0;
-    }
-
-    .legal-content-wrapper h2 {
-        margin: var(--spacing-08) 0 var(--spacing-04) 0;
-        font-weight: 600;
-    }
-
-    .legal-content-wrapper p,
-    .legal-content-wrapper li {
-        margin-bottom: var(--spacing-05);
-        line-height: var(--lh-desktop-body);
-    }
-
-    .legal-content-wrapper ul {
-        padding-left: var(--spacing-06);
-        margin-bottom: var(--spacing-05);
-    }
-
-    @media (max-width: 768px) {
-        .legal-content-wrapper {
-            padding: var(--spacing-06);
-            margin: 0 var(--spacing-04);
-        }
-    }
-</style>
 
 <script is:inline>
     (function () {

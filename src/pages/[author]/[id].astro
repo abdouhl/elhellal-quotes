@@ -85,7 +85,7 @@ const pageDescription = quote.book
   <QuoteSchema quotes={[quote]} url={canonicalUrl} />
   <BreadcrumbSchema items={breadcrumbs} />
 
-  <main id="main-content" class="single-quote-page">
+  <main id="main-content" class="page">
     <nav class="breadcrumb" aria-label="مسار التنقل">
       <a href="https://elhellal.com/">الرئيسية</a>
       <span aria-hidden="true">›</span>
@@ -94,23 +94,36 @@ const pageDescription = quote.book
       <a href={`/${encodeURIComponent(quote.authorSlug)}/`}>{quote.author}</a>
     </nav>
 
-    <div class="quote-layout">
-      <article class="quote-main-card">
-        <div class="quote-body">
-          <span class="single-quote-mark" aria-hidden="true">&rdquo;</span>
-          <blockquote class={`single-quote-text single-quote-text-${heroSizeTier}`}>{quote.text}</blockquote>
+    <article class="poster theme-night">
+      <span class="poster-mark" aria-hidden="true">&ldquo;</span>
+      <blockquote class={`poster-text poster-text-${heroSizeTier}`}>{quote.text}</blockquote>
 
-          {quote.tags && quote.tags.length > 0 && (
-            <div class="single-quote-tags">
-              {quote.tags.filter((tag): tag is string => typeof tag === "string").map((tag) => (
-                <a href={`/tag/${encodeURIComponent(slugifyTag(tag))}/`} class="keyword-tag">#{tag}</a>
-              ))}
-            </div>
+      <div class="poster-by">
+        {quote.authorImage ? (
+          <img src={quote.authorImage} alt={quote.author} class="avatar" loading="eager" width="56" height="56" style="width:56px;height:56px" />
+        ) : (
+          <span class="avatar avatar--initial" aria-hidden="true" style="width:56px;height:56px;font-size:24px">{quote.author.trim().charAt(0)}</span>
+        )}
+        <span class="poster-by-text">
+          <a href={`/${encodeURIComponent(quote.authorSlug)}/`} class="poster-author">{quote.author}</a>
+          {quote.book && (
+            quote.bookSlug
+              ? <a href={`/book/${encodeURIComponent(quote.bookSlug)}/`} class="poster-book">«{quote.book}»</a>
+              : <span class="poster-book">«{quote.book}»</span>
           )}
-        </div>
+        </span>
+      </div>
 
-        <div class="quote-share">
-          <span class="share-label">مشاركة</span>
+      {quote.tags && quote.tags.length > 0 && (
+        <div class="poster-tags">
+          {quote.tags.filter((tag): tag is string => typeof tag === "string").map((tag) => (
+            <a href={`/tag/${encodeURIComponent(slugifyTag(tag))}/`} class="chip">#{tag}</a>
+          ))}
+        </div>
+      )}
+
+      <div class="quote-share">
+        <span class="share-label">شارك الاقتباس</span>
           <div class="share-buttons">
             {shareLinks.map((l) => (
               <a href={l.href} target="_blank" rel="noopener noreferrer" class={`share-btn share-btn--${l.key}`} title={`مشاركة عبر ${l.label}`} aria-label={`مشاركة عبر ${l.label}`}>
@@ -139,63 +152,54 @@ const pageDescription = quote.book
             </button>
           </div>
         </div>
-      </article>
+    </article>
 
-      <aside class="quote-sidebar">
-        <div class="sidebar-card">
-          <p class="sidebar-label">القائل</p>
-          <div class="author-row">
-            {quote.authorImage ? (
-              <img src={quote.authorImage} alt={quote.author} class="author-avatar" loading="eager" width="44" height="44" />
-            ) : (
-              <span class="author-avatar author-avatar-initial" aria-hidden="true">{quote.author.trim().charAt(0)}</span>
-            )}
-            <div class="author-text">
-              <a href={`/${encodeURIComponent(quote.authorSlug)}/`} class="author-handle">{quote.author}</a>
-              <span class="author-sub">{quote.authorQuoteCount} اقتباس</span>
-            </div>
-          </div>
-          <a href={`/${encodeURIComponent(quote.authorSlug)}/`} class="sidebar-link">كل اقتباسات {quote.author} ←</a>
-        </div>
-
-        {quote.book && (
-          <div class="sidebar-card">
-            <p class="sidebar-label">من كتاب</p>
-            <div class="author-row">
-              {quote.bookCover ? (
-                <img src={quote.bookCover} alt={quote.book} class="book-thumb" loading="lazy" width="44" height="64" />
-              ) : (
-                <span class="book-thumb book-thumb-fallback" aria-hidden="true">📖</span>
-              )}
-              <div class="author-text">
-                {quote.bookSlug ? (
-                  <a href={`/book/${encodeURIComponent(quote.bookSlug)}/`} class="author-handle">{quote.book}</a>
-                ) : (
-                  <span class="author-handle">{quote.book}</span>
-                )}
-              </div>
-            </div>
-          </div>
+    <div class="context-cards">
+      <a href={`/${encodeURIComponent(quote.authorSlug)}/`} class="context-card">
+        {quote.authorImage ? (
+          <img src={quote.authorImage} alt="" class="avatar" loading="lazy" width="52" height="52" style="width:52px;height:52px" />
+        ) : (
+          <span class="avatar avatar--initial" aria-hidden="true" style="width:52px;height:52px;font-size:22px">{quote.author.trim().charAt(0)}</span>
         )}
-
-        <div class="adsense-slot" aria-label="Advertisement">
-          <AdUnit slot="2951250905" minHeight={250} />
-        </div>
-      </aside>
+        <span class="context-text">
+          <span class="context-label">القائل</span>
+          <span class="context-title">{quote.author}</span>
+          <span class="context-meta">كل اقتباساته ({quote.authorQuoteCount}) ←</span>
+        </span>
+      </a>
+      {quote.book && quote.bookSlug && (
+        <a href={`/book/${encodeURIComponent(quote.bookSlug)}/`} class="context-card">
+          {quote.bookCover ? (
+            <img src={quote.bookCover} alt="" class="cover" loading="lazy" style="width:48px" />
+          ) : (
+            <span class="cover cover--initial" aria-hidden="true" style="width:48px;font-size:1.2rem">{quote.book.trim().charAt(0)}</span>
+          )}
+          <span class="context-text">
+            <span class="context-label">من كتاب</span>
+            <span class="context-title">{quote.book}</span>
+            <span class="context-meta">كل اقتباسات الكتاب ←</span>
+          </span>
+        </a>
+      )}
     </div>
 
-    <!-- Sits below the whole quote card (share row included) so it's never next to a tappable share button. -->
-    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
+    <!-- Ads sit below the whole quote card (share row included) so they're never next to a tappable share button. -->
+    <div class="adsense-slot" aria-label="Advertisement">
+      <AdUnit slot="2951250905" minHeight={250} />
+    </div>
 
     {otherQuotes.length > 0 && (
-      <section class="more-quotes">
-        <h2 class="related-heading">المزيد من اقتباسات {quote.author}</h2>
+      <section class="section">
+        <div class="section-head">
+          <h2>المزيد من اقتباسات {quote.author}</h2>
+          <a href={`/${encodeURIComponent(quote.authorSlug)}/`} class="see-all">الكل ←</a>
+        </div>
         <ul role="list" class="related-grid">
           {otherQuotes.map((q) => (
             <li>
               <a href={`/${encodeURIComponent(q.authorSlug)}/${encodeURIComponent(q.id)}/`} class="related-card">
                 <span class="related-text">{q.text}</span>
-                {q.book && <span class="related-book">{q.book}</span>}
+                {q.book && <span class="related-book">«{q.book}»</span>}
               </a>
             </li>
           ))}
@@ -203,9 +207,7 @@ const pageDescription = quote.book
       </section>
     )}
 
-    <div class="page-nav">
-      <a href={`/${encodeURIComponent(quote.authorSlug)}/`} class="back-link">كل اقتباسات {quote.author} ←</a>
-    </div>
+    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
   </main>
 
   <script>
@@ -241,305 +243,180 @@ const pageDescription = quote.book
   </script>
 
   <style>
-    .single-quote-page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
-    }
-    .breadcrumb {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      color: var(--content-secondary);
-      margin-bottom: var(--spacing-06);
-      flex-wrap: wrap;
-    }
-    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
-    .breadcrumb a:hover { color: var(--content-primary); }
-
-    /* ── Two-column layout (same shell as the article page) ── */
-    .quote-layout {
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: var(--spacing-07);
-      align-items: start;
-    }
-    @media (max-width: 768px) {
-      .quote-layout { grid-template-columns: 1fr; }
-    }
-
-    /* ── Quote card ── */
-    .quote-main-card {
-      background: #111111;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow:
-        0 0 0 0.5px rgba(255,255,255,0.08),
-        0 4px 24px rgba(0,0,0,0.4);
-    }
-    .quote-body {
+    /* ── Poster ── */
+    .poster {
       position: relative;
-      padding: 56px var(--spacing-07) var(--spacing-07);
+      max-width: 860px;
+      margin: 0 auto;
+      padding: clamp(40px, 7vw, 80px) clamp(22px, 7vw, 80px) clamp(28px, 4vw, 40px);
+      text-align: center;
+      border: 1px solid rgba(230, 183, 92, 0.3);
+      border-radius: 28px;
+      box-shadow: var(--shadow-md);
     }
-    @media (max-width: 600px) {
-      .quote-body { padding: 48px var(--spacing-05) var(--spacing-05); }
-    }
-    .single-quote-mark {
-      position: absolute;
-      top: 6px;
-      right: 24px;
+    .poster-mark {
+      display: block;
+      height: 56px;
+      font-family: var(--font-quote);
       font-size: 110px;
       line-height: 1;
-      font-family: Georgia, 'Times New Roman', serif;
-      background: linear-gradient(180deg, rgba(255, 166, 64, 0.4), rgba(255, 140, 0, 0.06));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      pointer-events: none;
+      color: var(--accent);
     }
-    .single-quote-text {
-      position: relative;
-      margin: 0;
-      padding: 0;
-      border: none;
-      color: #f5f0ea;
+    .poster-text {
+      margin: 12px 0 0;
+      font-family: var(--font-quote);
       font-weight: 700;
-      line-height: 1.8;
-      text-align: right;
+      color: var(--ink);
+      text-wrap: balance;
     }
-    /* Auto-sizing: a one-line quote gets a poster-sized treatment; a long
-       passage steps down so it stays comfortable to read. */
-    .single-quote-text-xl { font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.5; }
-    .single-quote-text-lg { font-size: clamp(1.35rem, 3.2vw, 1.9rem); line-height: 1.65; }
-    .single-quote-text-md { font-size: clamp(1.15rem, 2.4vw, 1.5rem); }
-    .single-quote-text-sm { font-size: clamp(1rem, 1.8vw, 1.2rem); line-height: 1.85; }
+    .poster-text-xl { font-size: clamp(2rem, 5.5vw, 3.4rem); line-height: 1.55; }
+    .poster-text-lg { font-size: clamp(1.7rem, 4.2vw, 2.6rem); line-height: 1.65; }
+    .poster-text-md { font-size: clamp(1.45rem, 3.2vw, 2rem); line-height: 1.8; }
+    .poster-text-sm { font-size: clamp(1.2rem, 2.4vw, 1.5rem); line-height: 1.95; font-weight: 400; text-wrap: pretty; }
 
-    .single-quote-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: var(--spacing-06);
+    .poster-by {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 36px;
+      text-align: start;
     }
-    .keyword-tag {
-      display: inline-block;
-      padding: 3px 10px;
-      background: rgba(255, 140, 0, 0.1);
-      border: 0.5px solid rgba(255, 140, 0, 0.25);
-      color: DarkOrange;
-      border-radius: 4px;
-      font-family: var(--monospace);
-      font-size: 11px;
-      line-height: 1.6;
+    .poster-by::before {
+      content: "";
+      width: 32px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    .poster-by-text { display: flex; flex-direction: column; line-height: 1.45; }
+    .poster-author {
+      font-family: var(--font-ui-bold);
+      font-size: 18px;
+      color: var(--ink);
       text-decoration: none;
     }
-    .keyword-tag:hover { background: rgba(255, 140, 0, 0.2); }
+    .poster-author:hover { color: var(--accent); }
+    .poster-book { font-size: 14px; color: var(--ink-3); text-decoration: none; }
+    a.poster-book:hover { color: var(--accent); }
+
+    .poster-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .poster-tags .chip { padding: 4px 12px; font-size: 13px; color: var(--ink-2); }
 
     /* ── Share ── */
     .quote-share {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: var(--spacing-04);
-      flex-wrap: wrap;
-      padding: var(--spacing-05) var(--spacing-07);
-      border-top: 0.5px solid rgba(255,255,255,0.08);
+      gap: 12px;
+      margin-top: 36px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
     }
-    @media (max-width: 600px) {
-      .quote-share { padding: var(--spacing-04) var(--spacing-05); }
-    }
-    .share-label {
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      color: rgba(255,255,255,0.55);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .share-buttons { display: flex; flex-wrap: wrap; gap: var(--spacing-02); }
+    .share-label { font-size: 13px; color: var(--ink-3); }
+    .share-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .share-btn {
-      width: 36px;
-      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
-      background: rgba(255,255,255,0.05);
-      border: 0.5px solid rgba(255,255,255,0.08);
-      border-radius: 6px;
-      color: rgba(255,255,255,0.55);
-      text-decoration: none;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-    .share-btn[hidden] { display: none; }
-    .share-btn:hover { background: rgba(255,140,0,0.16); color: DarkOrange; }
-    .share-btn--whatsapp:hover { background: rgba(37,211,102,0.18); color: #25d366; }
-    .share-btn--x:hover { background: rgba(255,255,255,0.16); color: #fff; }
-    .share-btn--facebook:hover { background: rgba(24,119,242,0.18); color: #1877f2; }
-    .share-btn--telegram:hover { background: rgba(42,171,238,0.18); color: #2aabee; }
-    .share-btn--done { background: rgba(74,222,128,0.14); color: #4ade80; }
-
-    /* ── Sidebar ── */
-    .quote-sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-04);
-      position: sticky;
-      top: var(--spacing-05);
-    }
-    @media (max-width: 768px) {
-      .quote-sidebar { position: static; }
-    }
-    .sidebar-card {
-      background: var(--background-secondary);
-      border: 0.5px solid var(--border-muted);
-      border-radius: 8px;
-      padding: var(--spacing-05);
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-03);
-    }
-    .sidebar-label {
-      margin: 0;
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--content-secondary);
-    }
-    .author-row { display: flex; align-items: center; gap: var(--spacing-03); }
-    .author-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .author-avatar {
       width: 44px;
       height: 44px;
+      padding: 0;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
       border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: var(--background-selected);
-      box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.35);
+      color: var(--ink-2);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
     }
-    .author-avatar-initial {
+    .share-btn[hidden] { display: none; }
+    .share-btn:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+    .share-btn--whatsapp:hover { color: #fff; background: #1faa54; border-color: #1faa54; }
+    .share-btn--x:hover { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+    .share-btn--facebook:hover { color: #fff; background: #1877f2; border-color: #1877f2; }
+    .share-btn--telegram:hover { color: #fff; background: #2aabee; border-color: #2aabee; }
+    .share-btn--done { color: #2f9e5b; border-color: #2f9e5b; }
+
+    /* ── Author / book context ── */
+    .context-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      max-width: 860px;
+      margin: 20px auto 0;
+    }
+    .context-card {
       display: flex;
       align-items: center;
-      justify-content: center;
-      color: DarkOrange;
-      background: rgba(255, 140, 0, 0.12);
-      font-weight: 700;
-      font-size: 1.1rem;
-    }
-    .author-handle {
-      font-weight: 700;
-      font-size: var(--desktop-body-sm);
-      color: DarkOrange;
+      gap: 16px;
+      padding: 18px 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--ink);
       text-decoration: none;
-      line-height: 1.4;
+      transition: border-color 0.15s, transform 0.15s;
     }
-    a.author-handle:hover { color: #ff9d33; }
-    .author-sub {
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      color: var(--content-secondary);
+    .context-card:hover { border-color: var(--accent); color: var(--ink); transform: translateY(-2px); }
+    .context-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.45; }
+    .context-label { font-size: 12px; color: var(--ink-3); }
+    .context-title {
+      font-family: var(--font-ui-bold);
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .sidebar-link {
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      color: var(--content-secondary);
-      text-decoration: none;
-    }
-    .sidebar-link:hover { color: DarkOrange; }
-    .book-thumb {
-      width: 44px;
-      height: 64px;
-      object-fit: cover;
-      border-radius: 3px;
-      flex-shrink: 0;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.12);
-    }
-    .book-thumb-fallback {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 140, 0, 0.12);
-      font-size: 20px;
-    }
+    .context-meta { font-size: 13px; color: var(--accent); }
 
     .adsense-slot {
-      padding: var(--spacing-04);
-      background: var(--background-secondary);
-      border: 0.5px solid var(--border-muted);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    :global(.quote-page-ad) {
-      margin-top: var(--spacing-08);
+      max-width: 860px;
+      margin: 40px auto 0;
     }
 
-    /* ── More quotes: compact two-column cards, no hydration ── */
-    .more-quotes { margin-top: var(--spacing-09); }
-    .related-heading {
-      margin: 0 0 var(--spacing-05) 0;
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--content-secondary);
-    }
+    /* ── More quotes: compact cards, no hydration ── */
     .related-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--spacing-04);
-      list-style: none;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
       margin: 0;
       padding: 0;
-    }
-    @media (max-width: 640px) {
-      .related-grid { grid-template-columns: 1fr; }
+      list-style: none;
     }
     .related-card {
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-03);
+      gap: 12px;
       height: 100%;
-      padding: var(--spacing-05);
-      background: #111;
-      border-radius: 10px;
-      border-inline-start: 3px solid DarkOrange;
+      padding: 22px 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--ink);
       text-decoration: none;
-      box-shadow: 0 0 0 0.5px rgba(255,255,255,0.08);
-      transition: transform 0.15s, box-shadow 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
     }
     .related-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 6px 20px rgba(0,0,0,0.4);
+      color: var(--ink);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--line-strong);
     }
     .related-text {
-      font-size: var(--desktop-body-sm);
-      font-weight: 600;
-      line-height: 1.75;
-      color: #f0ede8;
+      font-family: var(--font-quote);
+      font-size: 1.15rem;
+      line-height: 1.85;
       display: -webkit-box;
-      -webkit-line-clamp: 4;
+      -webkit-line-clamp: 5;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .related-card:hover .related-text { color: #fff; }
-    .related-book {
-      margin-top: auto;
-      font-size: 11px;
-      font-family: var(--monospace);
-      color: rgba(255,255,255,0.5);
-    }
-
-    .page-nav {
-      margin-top: var(--spacing-07);
-      padding-top: var(--spacing-05);
-      border-top: 0.5px solid var(--border-muted);
-    }
-    .back-link {
-      font-size: var(--desktop-body-sm);
-      color: var(--content-secondary);
-      text-decoration: none;
-    }
-    .back-link:hover { color: var(--content-primary); }
+    .related-book { margin-top: auto; font-size: 12px; color: var(--ink-3); }
   </style>
 </Layout>

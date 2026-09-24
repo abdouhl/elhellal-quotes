@@ -1,65 +1,53 @@
+/* Masonry wall of quote cards — CSS columns so short and long quotes
+   pack together without ragged gaps. */
 .link-card-grid {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: var(--spacing-05);
-  padding: var(--spacing-00);
+  columns: 1;
+  column-gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
+/* inline-block is the only reliable way to stop a card splitting across columns */
+.link-card-grid > astro-island,
+.link-card-grid > li {
+  display: inline-block;
+  width: 100%;
+  vertical-align: top;
+  break-inside: avoid;
+  margin-bottom: 20px;
+}
+.link-card-grid > astro-island > li { margin: 0; }
 
 @media (min-width: 640px) {
-  .link-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .link-card-grid { columns: 2; }
 }
 
-@media (min-width: 1024px) {
-  .link-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+@media (min-width: 1000px) {
+  .link-card-grid { columns: 3; }
 }
 
-@media (min-width: 1400px) {
-  .link-card-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/* In-feed ad card — same shell as .link-card so it sits flush in the grid */
+/* In-feed ad card — same shell as a quote card so it sits flush in the wall */
 .ad-card {
-  min-height: 220px;
   display: flex;
   flex-direction: column;
-  padding: 10px 12px 12px;
   gap: 6px;
+  min-height: 220px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .ad-card-label {
-  font-family: var(--monospace);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  color: var(--ink-3);
 }
 
-/* No fill → remove the card so the grid doesn't show an empty placeholder. */
+/* No fill → remove the card so the wall doesn't show an empty placeholder. */
 .ad-card:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
   display: none;
 }
 
 .ad-card .adsbygoogle {
-  /* Fluid format computes its own height based on container width — don't
-     stretch it, just give it full width to size against. */
   width: 100%;
-}
-
-.infinite-scroll-loader {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--spacing-09);
-  min-height: 4rem;
-}
-
-.loading-text {
-  color: var(--content-secondary-alt);
-  font-size: var(--desktop-body-sm);
 }

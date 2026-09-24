@@ -4,12 +4,45 @@ import QuoteCard from "../components/QuoteCard";
 import BreadcrumbSchema from "../components/schema/BreadcrumbSchema.astro";
 import QuoteSchema from "../components/schema/QuoteSchema.astro";
 import { getQuotes, getQuoteAuthors, getQuoteBooks, getQuoteTags } from "../utils/quotes";
+import type { FlatQuote } from "../types";
 import "../components/CardsContainer.css";
 
 const quotes = getQuotes();
 const authors = getQuoteAuthors();
 const books = getQuoteBooks();
 const tags = getQuoteTags();
+
+const byLikes = (a: FlatQuote, b: FlatQuote) => (b.likes ?? 0) - (a.likes ?? 0);
+
+// Featured quote: one of the 30 most-liked quotes of a comfortable length,
+// rotated by build day so the hero changes with each deploy.
+const heroPool = quotes
+  .filter((q) => q.text.length >= 40 && q.text.length <= 170)
+  .sort(byLikes)
+  .slice(0, 30);
+const dayIndex = Math.floor(Date.now() / 86_400_000);
+const featured = heroPool.length > 0 ? heroPool[dayIndex % heroPool.length] : quotes[0];
+
+// Home wall: each author's most-liked quotes, dealt round-robin so no single
+// author floods the page.
+const WALL_SIZE = 36;
+const PER_AUTHOR = 3;
+const perAuthor = authors
+  .map((a) => a.quotes.filter((q) => q.id !== featured?.id && q.text.length <= 320).sort(byLikes).slice(0, PER_AUTHOR))
+  .filter((list) => list.length > 0);
+const wall: FlatQuote[] = [];
+for (let round = 0; round < PER_AUTHOR && wall.length < WALL_SIZE; round++) {
+  for (const list of perAuthor) {
+    if (list[round]) wall.push(list[round]);
+    if (wall.length >= WALL_SIZE) break;
+  }
+}
+
+const featuredAuthorUrl = featured ? `/${encodeURIComponent(featured.authorSlug)}/` : "/";
+const featuredUrl = featured ? `${featuredAuthorUrl}${encodeURIComponent(featured.id)}/` : "/";
+const featuredTier = featured && featured.text.length <= 80 ? "lg" : "md";
+
+const fmt = (n: number) => n.toLocaleString("en-US");
 
 const canonicalUrl = "https://quotes.elhellal.com/";
 const breadcrumbs = [
@@ -33,30 +66,100 @@ const breadcrumbs = [
   <QuoteSchema quotes={quotes} url={canonicalUrl} />
   <BreadcrumbSchema items={breadcrumbs} />
 
-  <main id="main-content" class="quotes-page">
-    <nav class="breadcrumb" aria-label="مسار التنقل">
-      <a href="https://elhellal.com/">الرئيسية</a>
-      <span aria-hidden="true">›</span>
-      <span>الاقتباسات</span>
-    </nav>
+  <main id="main-content" class="home">
+    <section class="hero theme-night">
+      <svg class="hero-moon" viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <mask id="hero-crescent"><rect width="200" height="200" fill="white" /><circle cx="128" cy="78" r="66" fill="black" /></mask>
+          <linearGradient id="hero-moon-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6d58e" /><stop offset="1" stop-color="#d99a3a" /></linearGradient>
+        </defs>
+        <circle cx="92" cy="104" r="78" fill="url(#hero-moon-fill)" mask="url(#hero-crescent)" />
+      </svg>
 
-    <header class="quotes-header">
-      <h1>الاقتباسات</h1>
-      <p>{quotes.length} اقتباساً أدبياً وفكرياً مترجماً إلى العربية</p>
-    </header>
+      <div class="hero-inner">
+        <div class="hero-intro">
+          <p class="eyebrow">مكتبة الاقتباسات العربية</p>
+          <h1 class="hero-title">كلمات <em>تبقى</em><br />بعد أن تُغلق الكتب</h1>
+          <p class="hero-lede">
+            اقتباسات أدبية وفكرية مختارة ومترجمة إلى العربية، من روايات وكتب
+            وأقوال أشهر الكتّاب — مرتّبة حسب الكاتب والكتاب والموضوع.
+          </p>
+          <div class="hero-actions">
+            <a href="/authors/" class="btn btn--primary">تصفّح الكتّاب</a>
+            <a href="/books/" class="btn">رفوف الكتب</a>
+          </div>
+          <ul class="hero-stats" role="list">
+            <li><strong>{fmt(quotes.length)}</strong> اقتباساً</li>
+            <li><strong>{fmt(authors.length)}</strong> كاتباً</li>
+            <li><strong>{fmt(books.length)}</strong> كتاباً</li>
+          </ul>
+        </div>
+
+        {featured && (
+          <figure class="hero-quote">
+            <p class="hero-quote-label"><span aria-hidden="true">✦</span> اقتباس اليوم</p>
+            <span class="hero-quote-mark" aria-hidden="true">&ldquo;</span>
+            <a href={featuredUrl} class="hero-quote-link">
+              <blockquote class={`hero-quote-text hero-quote-text--${featuredTier}`}>{featured.text}</blockquote>
+            </a>
+            <figcaption class="hero-quote-by">
+              {featured.authorImage ? (
+                <img src={featured.authorImage} alt="" class="avatar" width="52" height="52" style="width:52px;height:52px" />
+              ) : (
+                <span class="avatar avatar--initial" style="width:52px;height:52px;font-size:22px" aria-hidden="true">{featured.author.trim().charAt(0)}</span>
+              )}
+              <span>
+                <a href={featuredAuthorUrl} class="hero-quote-author">{featured.author}</a>
+                {featured.book && <span class="hero-quote-book">«{featured.book}»</span>}
+              </span>
+            </figcaption>
+          </figure>
+        )}
+      </div>
+
+      {tags.length > 0 && (
+        <nav class="topic-strip" aria-label="مواضيع شائعة">
+          <span class="topic-strip-label">اقتباسات عن</span>
+          <ul role="list" class="chip-list">
+            {tags.slice(0, 14).map((t) => (
+              <li><a href={`/tag/${encodeURIComponent(t.slug)}/`} class="chip">{t.label}</a></li>
+            ))}
+            <li><a href="/tags/" class="chip chip--more">كل المواضيع ←</a></li>
+          </ul>
+        </nav>
+      )}
+    </section>
+
+    <div class="page">
+    <section class="section">
+      <div class="section-head">
+        <h2>مختارات القرّاء</h2>
+        <span class="section-note">الأكثر إعجاباً من كل كاتب</span>
+      </div>
+      <ul role="list" class="link-card-grid">
+        {wall.map((quote) => (
+          <QuoteCard client:visible quote={quote} />
+        ))}
+      </ul>
+    </section>
 
     {authors.length > 0 && (
-      <section class="quotes-browse">
-        <div class="quotes-browse-heading">
-          <h2>تصفح حسب الكاتب</h2>
-          <a href="/authors/" class="see-all-link">كل الكتّاب ←</a>
+      <section class="section">
+        <div class="section-head">
+          <h2>كتّاب يستحقون القراءة</h2>
+          <a href="/authors/" class="see-all">كل الكتّاب ←</a>
         </div>
-        <ul role="list" class="browse-cloud">
-          {authors.slice(0, 40).map((a) => (
+        <ul role="list" class="people">
+          {authors.slice(0, 12).map((a) => (
             <li>
-              <a href={`/${encodeURIComponent(a.slug)}/`} class="browse-pill">
-                {a.author}
-                <span class="browse-pill-count">{a.quotes.length}</span>
+              <a href={`/${encodeURIComponent(a.slug)}/`} class="person">
+                {a.authorImage ? (
+                  <img src={a.authorImage} alt="" class="avatar" loading="lazy" width="88" height="88" />
+                ) : (
+                  <span class="avatar avatar--initial" aria-hidden="true">{a.author.trim().charAt(0)}</span>
+                )}
+                <span class="person-name">{a.author}</span>
+                <span class="person-meta">{fmt(a.quotes.length)} اقتباس</span>
               </a>
             </li>
           ))}
@@ -65,21 +168,22 @@ const breadcrumbs = [
     )}
 
     {books.length > 0 && (
-      <section class="quotes-browse">
-        <div class="quotes-browse-heading">
-          <h2>تصفح حسب الكتاب</h2>
-          <a href="/books/" class="see-all-link">كل الكتب ←</a>
+      <section class="section">
+        <div class="section-head">
+          <h2>من رفوف المكتبة</h2>
+          <a href="/books/" class="see-all">كل الكتب ←</a>
         </div>
-        <ul role="list" class="book-cloud">
-          {books.slice(0, 12).map((b) => (
+        <ul role="list" class="shelf">
+          {books.slice(0, 14).map((b) => (
             <li>
-              <a href={`/book/${encodeURIComponent(b.slug)}/`} class="book-cloud-item">
+              <a href={`/book/${encodeURIComponent(b.slug)}/`} class="shelf-item">
                 {b.cover ? (
-                  <img src={b.cover} alt={b.book} class="book-cloud-cover" loading="lazy" />
+                  <img src={b.cover} alt={b.book} class="cover" loading="lazy" />
                 ) : (
-                  <span class="book-cloud-cover book-cloud-cover-fallback" aria-hidden="true">{b.book.trim().charAt(0)}</span>
+                  <span class="cover cover--initial" aria-hidden="true">{b.book.trim().charAt(0)}</span>
                 )}
-                <span class="book-cloud-title">{b.book}</span>
+                <span class="shelf-title">{b.book}</span>
+                <span class="shelf-meta">{b.author}</span>
               </a>
             </li>
           ))}
@@ -87,173 +191,199 @@ const breadcrumbs = [
       </section>
     )}
 
-    {tags.length > 0 && (
-      <section class="quotes-browse">
-        <div class="quotes-browse-heading">
-          <h2>تصفح حسب الموضوع</h2>
-          <a href="/tags/" class="see-all-link">كل المواضيع ←</a>
+    {tags.length > 14 && (
+      <section class="section">
+        <div class="section-head">
+          <h2>اقتباسات عن…</h2>
+          <a href="/tags/" class="see-all">كل المواضيع ←</a>
         </div>
-        <ul role="list" class="browse-cloud">
-          {tags.slice(0, 60).map((t) => (
+        <ul role="list" class="chip-list">
+          {tags.slice(14, 60).map((t) => (
             <li>
-              <a href={`/tag/${encodeURIComponent(t.slug)}/`} class="browse-pill">
+              <a href={`/tag/${encodeURIComponent(t.slug)}/`} class="chip">
                 {t.label}
-                <span class="browse-pill-count">{t.quotes.length}</span>
+                <span class="chip-count">{fmt(t.quotes.length)}</span>
               </a>
             </li>
           ))}
         </ul>
       </section>
     )}
-
-    <section class="quotes-browse">
-      <h2>أحدث الاقتباسات</h2>
-      <ul role="list" class="link-card-grid">
-        {quotes.slice(0, 60).map((quote) => (
-          <QuoteCard client:visible quote={quote} />
-        ))}
-      </ul>
-    </section>
+    </div>
   </main>
 
   <style>
-    .quotes-page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
+    /* ── Hero: full-bleed night sky ── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      padding: clamp(40px, 7vw, 96px) var(--gutter) 0;
     }
-
-    .breadcrumb {
-      display: flex;
+    .hero-moon {
+      position: absolute;
+      z-index: -1;
+      top: -70px;
+      left: -90px;
+      width: clamp(200px, 28vw, 360px);
+      opacity: 0.9;
+      filter: drop-shadow(0 0 60px rgba(230, 183, 92, 0.45));
+      pointer-events: none;
+    }
+    .hero-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
       align-items: center;
-      gap: 6px;
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      color: var(--content-secondary);
-      margin-bottom: var(--spacing-06);
+      gap: clamp(32px, 5vw, 80px);
+      max-width: var(--page);
+      margin: 0 auto;
     }
-    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
-    .breadcrumb a:hover { color: var(--content-primary); }
-
-    .quotes-header {
-      margin-bottom: var(--spacing-07);
-    }
-    .quotes-header h1 {
-      margin: 0 0 var(--spacing-02) 0;
-      font-size: clamp(1.5rem, 3vw, 2rem);
-    }
-    .quotes-header p {
+    .hero-title {
       margin: 0;
-      font-family: var(--monospace);
-      font-size: var(--desktop-body-sm);
-      color: var(--content-secondary);
+      font-family: var(--font-quote);
+      font-size: clamp(2.6rem, 6vw, 4.6rem);
+      line-height: 1.25;
+      color: var(--ink);
     }
-
-    .quotes-browse {
-      margin-bottom: var(--spacing-08);
+    .hero-title em {
+      font-style: normal;
+      background: linear-gradient(180deg, #f8dc9c, #d9983a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
-    .quotes-browse h2 {
-      margin: 0 0 var(--spacing-04) 0;
-      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
-      color: DarkOrange;
+    .hero-lede {
+      max-width: 44ch;
+      margin: 20px 0 0;
+      font-size: 17px;
+      line-height: 1.9;
+      color: var(--ink-2);
     }
-
-    .browse-cloud {
+    .hero-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      list-style: none;
-      margin: 0;
-      padding: 0;
+      margin-top: 28px;
     }
-
-    .browse-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: rgba(255, 140, 0, 0.08);
-      border: 0.5px solid rgba(255, 140, 0, 0.25);
-      color: DarkOrange;
-      border-radius: 20px;
-      font-size: var(--desktop-body-sm);
-      text-decoration: none;
-      transition: background 0.15s ease, transform 0.15s ease;
-    }
-    .browse-pill:hover {
-      background: rgba(255, 140, 0, 0.18);
-      transform: translateY(-1px);
-    }
-    .browse-pill-count {
-      font-family: var(--monospace);
-      font-size: 11px;
-      opacity: 0.7;
-    }
-
-    .quotes-browse-heading {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: var(--spacing-03);
-      margin-bottom: var(--spacing-04);
-    }
-    .quotes-browse-heading h2 { margin: 0; }
-    .see-all-link {
-      font-family: var(--monospace);
-      font-size: var(--desktop-caption);
-      color: var(--content-secondary);
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .see-all-link:hover { color: DarkOrange; }
-
-    .book-cloud {
+    .hero-actions .btn { padding: 12px 24px; font-size: 15px; }
+    .hero-stats {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--spacing-04);
-      list-style: none;
-      margin: 0;
+      gap: 8px 36px;
+      margin: 36px 0 0;
       padding: 0;
+      list-style: none;
+      font-size: 14px;
+      color: var(--ink-3);
     }
-    .book-cloud-item {
-      display: flex;
-      flex-direction: column;
+    .hero-stats strong {
+      display: block;
+      font-family: var(--font-ui-bold);
+      font-size: 1.7rem;
+      line-height: 1.2;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-quote {
+      position: relative;
+      margin: 0;
+      padding: clamp(28px, 4vw, 52px);
+      background: linear-gradient(160deg, rgba(28, 42, 72, 0.88), rgba(14, 24, 44, 0.92));
+      border: 1px solid rgba(230, 183, 92, 0.35);
+      border-radius: 28px;
+      box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+    .hero-quote-label {
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
-      width: 96px;
-      text-decoration: none;
-      text-align: center;
+      gap: 8px;
+      margin: 0;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      font-family: var(--font-ui-bold);
+      font-size: 13px;
+      color: var(--accent);
     }
-    .book-cloud-cover {
-      width: 72px;
-      height: 106px;
-      object-fit: cover;
-      border-radius: 4px;
-      background: var(--background-selected);
-      box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
-      transition: transform 0.15s ease;
+    .hero-quote-mark {
+      position: absolute;
+      top: 4px;
+      left: 30px;
+      font-family: var(--font-quote);
+      font-size: 180px;
+      line-height: 1;
+      color: var(--accent);
+      opacity: 0.35;
+      pointer-events: none;
     }
-    .book-cloud-item:hover .book-cloud-cover {
-      transform: translateY(-2px);
-    }
-    .book-cloud-cover-fallback {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: DarkOrange;
-      background: rgba(255, 140, 0, 0.1);
+    .hero-quote-link { color: inherit; text-decoration: none; }
+    .hero-quote-link:hover { color: inherit; }
+    .hero-quote-text {
+      position: relative;
+      margin: 22px 0 0;
+      font-family: var(--font-quote);
       font-weight: 700;
-      font-size: 1.5rem;
+      color: var(--ink);
+      text-wrap: pretty;
     }
-    .book-cloud-title {
-      font-size: 11px;
-      color: var(--content-secondary);
-      line-height: 1.3;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+    .hero-quote-text--lg { font-size: clamp(1.8rem, 3.6vw, 2.6rem); line-height: 1.6; }
+    .hero-quote-text--md { font-size: clamp(1.45rem, 2.7vw, 1.95rem); line-height: 1.75; }
+    .hero-quote-by {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 30px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .hero-quote-by .avatar { box-shadow: 0 0 0 2px var(--gold); }
+    .hero-quote-by > span { display: flex; flex-direction: column; line-height: 1.4; }
+    .hero-quote-author {
+      font-family: var(--font-ui-bold);
+      font-size: 17px;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .hero-quote-author:hover { color: var(--accent); }
+    .hero-quote-book { font-size: 13px; color: var(--ink-3); }
+
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-moon { top: -40px; left: -70px; opacity: 0.55; }
+    }
+
+    /* ── Topic strip (bottom edge of the hero) ── */
+    .topic-strip {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      max-width: var(--page);
+      margin: clamp(40px, 6vw, 72px) auto 0;
+      padding: 22px 0 26px;
+      border-top: 1px solid var(--line);
+    }
+    .topic-strip-label {
+      flex-shrink: 0;
+      font-family: var(--font-ui-bold);
+      font-size: 14px;
+      color: var(--accent);
+    }
+    .topic-strip .chip { padding: 6px 14px; font-size: 14px; }
+    .topic-strip .chip:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .chip--more { border-style: dashed; color: var(--ink-2); }
+    @media (max-width: 640px) {
+      .topic-strip { align-items: flex-start; flex-direction: column; gap: 12px; }
+    }
+
+    .home > .page { padding-top: 0; }
+    .home > .page > .section:first-child { margin-top: clamp(40px, 6vw, 64px); }
+
+    .section-note {
+      font-size: 13px;
+      color: var(--ink-3);
     }
   </style>
 </Layout>

@@ -1,0 +1,10 @@
+import puppeteer from 'puppeteer';
+const [,, url, out, w='1280', h='1800', scheme='light'] = process.argv;
+const b = await puppeteer.launch();
+const p = await b.newPage();
+await p.setViewport({ width: +w, height: +h });
+await p.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: scheme }]);
+await p.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }).catch(()=>{});
+await new Promise(r=>setTimeout(r,1500));
+await p.screenshot({ path: out });
+await b.close();

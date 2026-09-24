@@ -22,7 +22,7 @@ const breadcrumbs = [
 >
   <BreadcrumbSchema items={breadcrumbs} />
 
-  <main id="main-content" class="tags-index-page">
+  <main id="main-content" class="page">
     <nav class="breadcrumb" aria-label="مسار التنقل">
       <a href="https://elhellal.com/">الرئيسية</a>
       <span aria-hidden="true">›</span>
@@ -31,17 +31,18 @@ const breadcrumbs = [
       <span>المواضيع</span>
     </nav>
 
-    <header class="tags-header">
-      <h1>تصفح حسب الموضوع</h1>
-      <p>{tags.length} موضوعاً مصنّفة على الهلال</p>
+    <header class="index-head">
+      <p class="eyebrow">تصفّح حسب الموضوع</p>
+      <h1 class="page-title">المواضيع</h1>
+      <p class="page-lede">{tags.length} موضوعاً مصنّفة على الهلال</p>
     </header>
 
-    <ul role="list" class="tag-cloud">
-      {tags.map((t) => (
+    <ul role="list" class="chip-list tag-cloud">
+      {tags.map((t, i) => (
         <li>
-          <a href={`/tag/${encodeURIComponent(t.slug)}/`} class="tag-pill">
+          <a href={`/tag/${encodeURIComponent(t.slug)}/`} class={`chip ${i < 12 ? "chip--big" : ""}`}>
             {t.label}
-            <span class="tag-pill-count">{t.quotes.length}</span>
+            <span class="chip-count">{t.quotes.length}</span>
           </a>
         </li>
       ))}
@@ -49,66 +50,13 @@ const breadcrumbs = [
   </main>
 
   <style>
-    .tags-index-page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
-    }
-    .breadcrumb {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: var(--desktop-caption);
-      font-family: var(--monospace);
-      color: var(--content-secondary);
-      margin-bottom: var(--spacing-06);
-    }
-    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
-    .breadcrumb a:hover { color: var(--content-primary); }
-
-    .tags-header {
-      margin-bottom: var(--spacing-07);
-    }
-    .tags-header h1 {
-      margin: 0 0 var(--spacing-02) 0;
-      font-size: clamp(1.5rem, 3vw, 2rem);
-    }
-    .tags-header p {
-      margin: 0;
-      font-family: var(--monospace);
-      font-size: var(--desktop-body-sm);
-      color: var(--content-secondary);
-    }
-
-    .tag-cloud {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    .tag-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      background: rgba(255, 140, 0, 0.08);
-      border: 0.5px solid rgba(255, 140, 0, 0.25);
-      color: DarkOrange;
-      border-radius: 20px;
-      font-size: var(--desktop-body-sm);
-      text-decoration: none;
-      transition: background 0.15s ease, transform 0.15s ease;
-    }
-    .tag-pill:hover {
-      background: rgba(255, 140, 0, 0.18);
-      transform: translateY(-1px);
-    }
-    .tag-pill-count {
-      font-family: var(--monospace);
-      font-size: 11px;
-      opacity: 0.7;
+    .index-head { margin-bottom: clamp(32px, 5vw, 48px); }
+    .tag-cloud { gap: 10px; }
+    .chip--big {
+      padding: 10px 20px;
+      font-family: var(--font-quote);
+      font-size: 1.2rem;
+      font-weight: 700;
     }
   </style>
 </Layout>
