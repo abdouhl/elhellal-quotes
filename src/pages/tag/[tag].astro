@@ -1,0 +1,245 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import { QuoteRow } from "../../components/QuoteCard";
+import AdUnit from "../../components/AdUnit.astro";
+import BreadcrumbSchema from "../../components/schema/BreadcrumbSchema.astro";
+import QuoteSchema from "../../components/schema/QuoteSchema.astro";
+import { loadQuoteShard } from "../../utils/quote-shard";
+import type { FlatQuote } from "../../types";
+
+const tagSlug = Astro.params.tag as string;
+
+// Precomputed at build time by scripts/generate-quote-indices.ts (only tags
+// meeting MIN_QUOTES_PER_TAG are included) — one small static-asset fetch (one of
+// a fixed number of shards) instead of scanning + regex-extracting topics
+// from all ~15k quotes per request.
+const shard = await loadQuoteShard<{ label: string; quotes: FlatQuote[] }>("by-tag", tagSlug, Astro);
+const entry = shard?.[tagSlug];
+
+if (!entry) {
+  Astro.response.status = 404;
+  return Astro.rewrite("/404");
+}
+
+const { label, quotes } = entry;
+
+const canonicalUrl = `https://quotes.elhellal.com/tag/${encodeURIComponent(tagSlug)}/`;
+
+// Top authors contributing to this topic — surfaces range and doubles as internal links.
+const authorCounts = new Map<string, { name: string; slug: string; image?: string; count: number }>();
+quotes.forEach((q) => {
+  const cur = authorCounts.get(q.authorSlug) || { name: q.author, slug: q.authorSlug, image: q.authorImage, count: 0 };
+  cur.count += 1;
+  authorCounts.set(q.authorSlug, cur);
+});
+const topAuthors = [...authorCounts.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+
+const pageDescription = `${quotes.length} اقتباساً مترجماً إلى العربية عن "${label}"، من ${topAuthors.length} ${topAuthors.length === 1 ? 'كاتب' : 'كتّاب'} مختلفين.`;
+
+const breadcrumbs = [
+  { name: "الرئيسية", url: "https://elhellal.com" },
+  { name: "الاقتباسات", url: "https://quotes.elhellal.com/" },
+  { name: label },
+];
+---
+
+<Layout
+  site={`الهلال - اقتباسات عن ${label}`}
+  title="الهلال"
+  tagline="أجمل الاقتباسات العربية من أشهر الكتّاب والكتب"
+  pageTitle={`اقتباسات عن ${label} | الهلال`}
+  pageDescription={pageDescription}
+  canonicalUrl={canonicalUrl}
+  ogTitle={`اقتباسات عن ${label} | الهلال`}
+  ogDescription={`${quotes.length} اقتباساً عن ${label}`}
+  ogUrl={canonicalUrl}
+  ogType="website"
+>
+  <QuoteSchema quotes={quotes} url={canonicalUrl} />
+  <BreadcrumbSchema items={breadcrumbs} />
+
+  <main id="main-content" class="quote-tag-page">
+    <nav class="breadcrumb" aria-label="مسار التنقل">
+      <a href="https://elhellal.com/">الرئيسية</a>
+      <span aria-hidden="true">›</span>
+      <a href="/">الاقتباسات</a>
+      <span aria-hidden="true">›</span>
+      <span>{label}</span>
+    </nav>
+
+    <header class="tag-header">
+      <div class="tag-header-top">
+        <span class="tag-icon" aria-hidden="true">#</span>
+        <div>
+          <h1>{label}</h1>
+          <p class="tag-count">{quotes.length} اقتباساً</p>
+        </div>
+      </div>
+
+      {topAuthors.length > 0 && (
+        <div class="tag-authors" aria-label="أبرز الكُتّاب في هذا الموضوع">
+          {topAuthors.map((a) => (
+            <a href={`/${encodeURIComponent(a.slug)}/`} class="tag-author-pill">
+              {a.image ? (
+                <img src={a.image} alt={a.name} class="tag-author-avatar" loading="lazy" />
+              ) : (
+                <span class="tag-author-avatar tag-author-avatar-fallback" aria-hidden="true">{a.name.trim().charAt(0)}</span>
+              )}
+              {a.name} <span class="pill-count">{a.count}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
+
+    <section aria-label={`اقتباسات عن ${label}`}>
+      <ul role="list" class="quote-row-list">
+        {quotes.map((quote) => (
+          <QuoteRow client:visible quote={quote} />
+        ))}
+      </ul>
+    </section>
+
+    <div class="page-nav">
+      <a href="/" class="back-link">كل الاقتباسات ←</a>
+    </div>
+  </main>
+
+  <style>
+    .quote-tag-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--desktop-caption);
+      font-family: var(--monospace);
+      color: var(--content-secondary);
+      margin-bottom: var(--spacing-06);
+      flex-wrap: wrap;
+    }
+    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--content-primary); }
+
+    .tag-header {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-04);
+      margin-bottom: var(--spacing-07);
+      padding: var(--spacing-06);
+      background: var(--background-secondary);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .tag-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      height: 120px;
+      background: radial-gradient(circle at 15% -20%, rgba(255, 140, 0, 0.3), transparent 65%);
+      pointer-events: none;
+    }
+    .tag-header-top {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-04);
+    }
+    .tag-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: rgba(255, 140, 0, 0.12);
+      color: DarkOrange;
+      font-weight: 700;
+      font-size: 1.6rem;
+      font-family: var(--monospace);
+    }
+    .tag-header h1 {
+      margin: 0;
+      color: DarkOrange;
+      font-size: clamp(1.35rem, 3.2vw, 1.9rem);
+    }
+    .tag-count {
+      margin: 4px 0 0;
+      font-family: var(--monospace);
+      font-size: var(--desktop-caption);
+      color: var(--content-secondary);
+    }
+
+    .tag-authors {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag-author-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px 4px 4px;
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--content-secondary);
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .tag-author-pill:hover {
+      border-color: DarkOrange;
+      color: var(--content-primary);
+    }
+    .tag-author-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .tag-author-avatar-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.15);
+      font-weight: 700;
+      font-size: 10px;
+    }
+    .pill-count {
+      color: DarkOrange;
+      font-weight: 600;
+    }
+
+    :global(.quote-page-ad) {
+      margin-bottom: var(--spacing-07);
+      padding-top: var(--spacing-05);
+      border-top: 0.5px solid var(--border-muted);
+    }
+
+    .page-nav {
+      margin-top: var(--spacing-07);
+      padding-top: var(--spacing-05);
+      border-top: 0.5px solid var(--border-muted);
+    }
+    .back-link {
+      font-size: var(--desktop-body-sm);
+      color: var(--content-secondary);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--content-primary); }
+  </style>
+</Layout>

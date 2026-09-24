@@ -1,0 +1,18 @@
+dist/
+.astro/
+node_modules/
+.env
+.env.*
+!.env.example
+.wrangler/
+.dev.vars
+.dev.vars.*
+.DS_Store
+.vscode
+
+# generated at build time by scripts/generate-quote-indices.ts
+public/_quotes/
+
+# generated TikTok slideshows / X posts (manual-upload only, never served)
+/tiktok-slides/
+/x-posts/

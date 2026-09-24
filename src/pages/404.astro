@@ -1,0 +1,106 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+
+const browseLinks = [
+    { title: "الكتّاب", href: "/authors/" },
+    { title: "الكتب", href: "/books/" },
+    { title: "المواضيع", href: "/tags/" },
+];
+---
+
+<Layout
+    site="اقتباسات الهلال"
+    title="الصفحة غير موجودة"
+    tagline="لا يمكننا العثور على الصفحة التي تبحث عنها"
+    pageTitle="404 — الصفحة غير موجودة"
+    pageDescription="الصفحة التي تبحث عنها غير موجودة أو تم نقلها. تصفّح أجمل الاقتباسات العربية على الهلال."
+    ogTitle="404 — الصفحة غير موجودة | اقتباسات الهلال"
+    ogType="website"
+    ogSiteName="اقتباسات الهلال"
+    noindex
+>
+    <main id="main-content" class="container not-found">
+        <div class="not-found-content">
+            <p class="not-found-code" aria-hidden="true">٤٠٤</p>
+            <h1 class="nu-c-h5 nu-u-text--primary">هذه الصفحة غير موجودة</h1>
+            <p class="nu-c-fs-normal nu-u-text--secondary not-found-message">
+                ربما تم نقل الرابط أو حذفه، أو أنك كتبت العنوان بشكل غير صحيح.
+                تصفّح الاقتباسات حسب الكاتب أو الكتاب أو الموضوع.
+            </p>
+
+            <div class="btn-group not-found-actions">
+                <a href="/" class="submit-btn">العودة للرئيسية</a>
+                <a href="/authors/" class="submit-btn">تصفح الكتّاب</a>
+            </div>
+
+            <div class="not-found-categories">
+                <h2 class="nu-c-fs-small nu-u-text--secondary not-found-categories-title">
+                    تصفّح الاقتباسات
+                </h2>
+                <ul class="not-found-categories-list">
+                    {browseLinks.map((link) => (
+                        <li>
+                            <a href={link.href} class="nu-u-link--subtle">
+                                {link.title}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .not-found {
+        display: flex;
+        justify-content: center;
+        padding: var(--spacing-10) var(--spacing-06) var(--spacing-15);
+    }
+
+    .not-found-content {
+        text-align: center;
+        max-width: 34rem;
+    }
+
+    .not-found-code {
+        font-size: clamp(3.5rem, 12vw, 6rem);
+        line-height: 1;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0 0 var(--spacing-04);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .not-found-message {
+        max-width: 28rem;
+        margin: var(--spacing-04) auto var(--spacing-06);
+    }
+
+    .not-found-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .not-found-categories {
+        margin-top: var(--spacing-10);
+        padding-top: var(--spacing-06);
+        border-top: 0.5px solid var(--border-muted);
+    }
+
+    .not-found-categories-title {
+        margin-bottom: var(--spacing-04);
+    }
+
+    .not-found-categories-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--spacing-03) var(--spacing-05);
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+</style>

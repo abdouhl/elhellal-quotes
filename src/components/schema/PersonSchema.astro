@@ -1,0 +1,24 @@
+---
+interface Props {
+    name: string;
+    url: string;
+    description?: string;
+    image?: string;
+    sameAs?: string;
+}
+
+const { name, url, description, image, sameAs } = Astro.props;
+
+const schema: any = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    url,
+};
+
+if (description) schema.description = description;
+if (image) schema.image = image;
+if (sameAs) schema.sameAs = [sameAs];
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

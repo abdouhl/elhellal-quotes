@@ -1,0 +1,28 @@
+---
+import type { FlatQuote } from '../../types';
+
+interface Props {
+    quotes: FlatQuote[];
+    url: string;
+}
+
+const { quotes, url } = Astro.props;
+
+const schema = {
+    "@context": "https://schema.org",
+    "@graph": quotes.slice(0, 100).map((quote) => {
+        const entry: any = {
+            "@type": "Quotation",
+            text: quote.text,
+            creator: { "@type": "Person", name: quote.author },
+            url,
+        };
+        if (quote.book) {
+            entry.isPartOf = { "@type": "Book", name: quote.book };
+        }
+        return entry;
+    }),
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

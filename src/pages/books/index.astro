@@ -1,0 +1,149 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import BreadcrumbSchema from "../../components/schema/BreadcrumbSchema.astro";
+import { getQuoteBooks } from "../../utils/quotes";
+
+const books = getQuoteBooks();
+
+const breadcrumbs = [
+  { name: "الرئيسية", url: "https://elhellal.com" },
+  { name: "الاقتباسات", url: "https://quotes.elhellal.com/" },
+  { name: "الكتب" },
+];
+---
+
+<Layout
+  site="الهلال - اقتباسات حسب الكتاب"
+  title="الهلال"
+  tagline="أجمل الاقتباسات العربية من أشهر الكتّاب والكتب"
+  pageTitle="تصفح الاقتباسات حسب الكتاب | الهلال"
+  pageDescription="تصفح جميع الكتب التي استُخرجت منها الاقتباسات الأدبية والفكرية على الهلال."
+  canonicalUrl="https://quotes.elhellal.com/books/"
+>
+  <BreadcrumbSchema items={breadcrumbs} />
+
+  <main id="main-content" class="books-page">
+    <nav class="breadcrumb" aria-label="مسار التنقل">
+      <a href="https://elhellal.com/">الرئيسية</a>
+      <span aria-hidden="true">›</span>
+      <a href="/">الاقتباسات</a>
+      <span aria-hidden="true">›</span>
+      <span>الكتب</span>
+    </nav>
+
+    <header class="books-header">
+      <h1>تصفح حسب الكتاب</h1>
+      <p>{books.length} كتاباً استُخرجت منه اقتباسات</p>
+    </header>
+
+    <ul role="list" class="book-grid">
+      {books.map((b) => (
+        <li>
+          <a href={`/book/${encodeURIComponent(b.slug)}/`} class="book-card">
+            {b.cover ? (
+              <img src={b.cover} alt={b.book} class="book-card-cover" loading="lazy" />
+            ) : (
+              <span class="book-card-cover book-card-cover-fallback" aria-hidden="true">{b.book.trim().charAt(0)}</span>
+            )}
+            <span class="book-card-title">{b.book}</span>
+            <span class="book-card-author">{b.author}</span>
+            <span class="book-card-count">{b.quotes.length} اقتباساً</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </main>
+
+  <style>
+    .books-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--desktop-caption);
+      font-family: var(--monospace);
+      color: var(--content-secondary);
+      margin-bottom: var(--spacing-06);
+    }
+    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--content-primary); }
+
+    .books-header {
+      margin-bottom: var(--spacing-07);
+    }
+    .books-header h1 {
+      margin: 0 0 var(--spacing-02) 0;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+    .books-header p {
+      margin: 0;
+      font-family: var(--monospace);
+      font-size: var(--desktop-body-sm);
+      color: var(--content-secondary);
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: var(--spacing-05);
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .book-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: var(--spacing-05) var(--spacing-03);
+      background: var(--background-secondary);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 8px;
+      text-decoration: none;
+      text-align: center;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .book-card:hover {
+      transform: translateY(-2px);
+      border-color: DarkOrange;
+    }
+    .book-card-cover {
+      width: 84px;
+      height: 124px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: var(--background-selected);
+      box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+    }
+    .book-card-cover-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.1);
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    .book-card-title {
+      font-size: var(--desktop-body-sm);
+      font-weight: 600;
+      color: var(--content-primary);
+      line-height: 1.3;
+    }
+    .book-card-author {
+      font-family: var(--monospace);
+      font-size: 11px;
+      color: var(--content-secondary);
+    }
+    .book-card-count {
+      font-family: var(--monospace);
+      font-size: 11px;
+      color: DarkOrange;
+    }
+  </style>
+</Layout>

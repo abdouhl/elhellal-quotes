@@ -1,0 +1,65 @@
+.link-card-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--spacing-05);
+  padding: var(--spacing-00);
+}
+
+@media (min-width: 640px) {
+  .link-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .link-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1400px) {
+  .link-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* In-feed ad card — same shell as .link-card so it sits flush in the grid */
+.ad-card {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 12px;
+  gap: 6px;
+}
+
+.ad-card-label {
+  font-family: var(--monospace);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* No fill → remove the card so the grid doesn't show an empty placeholder. */
+.ad-card:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+  display: none;
+}
+
+.ad-card .adsbygoogle {
+  /* Fluid format computes its own height based on container width — don't
+     stretch it, just give it full width to size against. */
+  width: 100%;
+}
+
+.infinite-scroll-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-09);
+  min-height: 4rem;
+}
+
+.loading-text {
+  color: var(--content-secondary-alt);
+  font-size: var(--desktop-body-sm);
+}

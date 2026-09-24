@@ -1,0 +1,374 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { QuoteRow } from "../components/QuoteCard";
+import AdUnit from "../components/AdUnit.astro";
+import BreadcrumbSchema from "../components/schema/BreadcrumbSchema.astro";
+import QuoteSchema from "../components/schema/QuoteSchema.astro";
+import PersonSchema from "../components/schema/PersonSchema.astro";
+import { getQuoteAuthors, getQuoteBooks, getQuoteTags } from "../utils/quotes";
+import { normalizeTag, slugifyTag } from "../utils/tag-slug";
+import biographies from "../data/biographies.json";
+
+export async function getStaticPaths() {
+  return getQuoteAuthors().map((entry) => ({
+    params: { author: entry.slug },
+    props: { author: entry.author, authorImage: entry.authorImage, quotes: entry.quotes },
+  }));
+}
+
+const { author, authorImage, quotes } = Astro.props;
+const authorSlug = Astro.params.author as string;
+
+const authorBooks = getQuoteBooks().filter((b) => b.authorSlug === authorSlug);
+
+const qualifyingTagSlugs = new Set(getQuoteTags().map((t) => t.slug));
+const tagCounts = new Map<string, { label: string; count: number }>();
+quotes.forEach((q) => {
+  // Guard against malformed source data (e.g. a tag stored as a nested
+  // array instead of a string) so one bad quote can't crash the whole page.
+  (q.tags || []).filter((t): t is string => typeof t === "string").forEach((raw) => {
+    const label = normalizeTag(raw);
+    const slug = slugifyTag(raw);
+    if (!label || !slug || !qualifyingTagSlugs.has(slug)) return;
+    const cur = tagCounts.get(slug) || { label, count: 0 };
+    cur.count += 1;
+    tagCounts.set(slug, cur);
+  });
+});
+const topTags = [...tagCounts.entries()]
+  .map(([slug, v]) => ({ slug, ...v }))
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 12);
+
+const bookQuoteCount = quotes.filter((q) => q.book).length;
+const directQuoteCount = quotes.length - bookQuoteCount;
+
+// Set only when this author has a biography on biographies.elhellal.com (see `bun run sync-biographies`).
+const biographyUrl = (biographies as string[]).includes(authorSlug)
+  ? `https://biographies.elhellal.com/${encodeURIComponent(authorSlug)}/`
+  : null;
+
+const canonicalUrl = `https://quotes.elhellal.com/${encodeURIComponent(authorSlug)}/`;
+const breadcrumbs = [
+  { name: "الرئيسية", url: "https://elhellal.com" },
+  { name: "الاقتباسات", url: "https://quotes.elhellal.com/" },
+  { name: author },
+];
+
+const pageDescription = authorBooks.length > 0
+  ? `${quotes.length} اقتباساً لـ${author} مترجماً إلى العربية، من ${authorBooks.length} ${authorBooks.length === 1 ? 'كتاب' : 'كتب'} ومن أقواله المباشرة.`
+  : `${quotes.length} اقتباساً لـ${author} مترجماً إلى العربية.`;
+---
+
+<Layout
+  site={`الهلال - اقتباسات ${author}`}
+  title="الهلال"
+  tagline="أجمل الاقتباسات العربية من أشهر الكتّاب والكتب"
+  pageTitle={`اقتباسات ${author} | الهلال`}
+  pageDescription={pageDescription}
+  canonicalUrl={canonicalUrl}
+  ogTitle={`اقتباسات ${author} | الهلال`}
+  ogDescription={`${quotes.length} اقتباساً لـ${author}`}
+  ogUrl={canonicalUrl}
+  ogImage={authorImage}
+  ogType="profile"
+>
+  <PersonSchema name={author} url={canonicalUrl} image={authorImage} description={pageDescription} />
+  <QuoteSchema quotes={quotes} url={canonicalUrl} />
+  <BreadcrumbSchema items={breadcrumbs} />
+
+  <main id="main-content" class="quote-author-page">
+    <nav class="breadcrumb" aria-label="مسار التنقل">
+      <a href="https://elhellal.com/">الرئيسية</a>
+      <span aria-hidden="true">›</span>
+      <a href="/">الاقتباسات</a>
+      <span aria-hidden="true">›</span>
+      <span>{author}</span>
+    </nav>
+
+    <header class="author-header">
+      <div class="author-header-top">
+        {authorImage ? (
+          <img src={authorImage} alt={author} class="author-avatar-lg" loading="eager" />
+        ) : (
+          <span class="author-avatar-lg author-avatar-initial" aria-hidden="true">{author.trim().charAt(0)}</span>
+        )}
+        <div class="author-identity">
+          <h1>{author}</h1>
+          <div class="author-stats">
+            <span class="author-stat">{quotes.length} اقتباساً</span>
+            {authorBooks.length > 0 && (
+              <>
+                <span class="stat-dot" aria-hidden="true">·</span>
+                <span class="author-stat">{authorBooks.length} {authorBooks.length === 1 ? 'كتاب' : 'كتب'}</span>
+              </>
+            )}
+            {directQuoteCount > 0 && bookQuoteCount > 0 && (
+              <>
+                <span class="stat-dot" aria-hidden="true">·</span>
+                <span class="author-stat">{directQuoteCount} من أقواله المباشرة</span>
+              </>
+            )}
+          </div>
+          {biographyUrl && (
+            <a href={biographyUrl} class="author-bio-btn">اقرأ السيرة <span aria-hidden="true">←</span></a>
+          )}
+        </div>
+      </div>
+
+      {topTags.length > 0 && (
+        <div class="author-categories" aria-label="المواضيع الأكثر تكراراً">
+          {topTags.map((t) => (
+            <a href={`/tag/${encodeURIComponent(t.slug)}/`} class="author-category-pill">
+              {t.label} <span class="pill-count">{t.count}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    {authorBooks.length > 0 && (
+      <section class="author-books" aria-label="كتب هذا الكاتب">
+        <h2>كتب {author}</h2>
+        <ul role="list" class="author-books-grid">
+          {authorBooks.map((b) => (
+            <li>
+              <a href={`/book/${encodeURIComponent(b.slug)}/`} class="author-book-card">
+                {b.cover ? (
+                  <img src={b.cover} alt={b.book} class="author-book-cover" loading="lazy" />
+                ) : (
+                  <span class="author-book-cover author-book-cover-fallback" aria-hidden="true">{b.book.trim().charAt(0)}</span>
+                )}
+                <span class="author-book-title">{b.book}</span>
+                <span class="author-book-count">{b.quotes.length} اقتباساً</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
+
+    <section aria-label={`كل اقتباسات ${author}`}>
+      <ul role="list" class="quote-row-list">
+        {quotes.map((quote) => (
+          <QuoteRow client:visible quote={quote} showAuthor={false} />
+        ))}
+      </ul>
+    </section>
+
+    <div class="page-nav">
+      <a href="/" class="back-link">كل الاقتباسات ←</a>
+    </div>
+  </main>
+
+  <style>
+    .quote-author-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--desktop-caption);
+      font-family: var(--monospace);
+      color: var(--content-secondary);
+      margin-bottom: var(--spacing-06);
+      flex-wrap: wrap;
+    }
+    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--content-primary); }
+
+    .author-header {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-04);
+      margin-bottom: var(--spacing-07);
+      padding: var(--spacing-06);
+      background: var(--background-secondary);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .author-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      height: 120px;
+      background: radial-gradient(circle at 15% -20%, rgba(255, 140, 0, 0.35), transparent 65%);
+      pointer-events: none;
+    }
+    .author-header-top {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-05);
+    }
+    .author-avatar-lg {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--background-selected);
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.45);
+    }
+    .author-avatar-initial {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.12);
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    .author-identity { flex: 1; min-width: 0; }
+    .author-header h1 {
+      margin: 0;
+      color: DarkOrange;
+      font-size: clamp(1.35rem, 3.2vw, 1.9rem);
+    }
+    .author-stats {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: var(--spacing-02);
+      font-family: var(--monospace);
+      font-size: var(--desktop-caption);
+      color: var(--content-secondary);
+      flex-wrap: wrap;
+    }
+    .stat-dot { opacity: 0.5; }
+    .author-bio-btn {
+      display: inline-block;
+      margin-top: var(--spacing-03);
+      padding: 7px 16px;
+      background: rgba(255, 140, 0, 0.14);
+      border: 0.5px solid rgba(255, 140, 0, 0.5);
+      border-radius: 8px;
+      color: DarkOrange;
+      font-size: var(--desktop-body-sm);
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .author-bio-btn:hover { background: DarkOrange; color: #111; }
+
+    .author-categories {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .author-category-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 20px;
+      font-family: var(--monospace);
+      font-size: 11px;
+      color: var(--content-secondary);
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .author-category-pill:hover {
+      border-color: DarkOrange;
+      color: var(--content-primary);
+    }
+    .pill-count {
+      color: DarkOrange;
+      font-weight: 600;
+    }
+
+    .author-books {
+      margin-bottom: var(--spacing-07);
+    }
+    .author-books h2 {
+      margin: 0 0 var(--spacing-04) 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+      color: DarkOrange;
+    }
+    .author-books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--spacing-04);
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .author-book-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: var(--spacing-04) var(--spacing-02);
+      background: var(--background-secondary);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 8px;
+      text-decoration: none;
+      text-align: center;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .author-book-card:hover {
+      transform: translateY(-2px);
+      border-color: DarkOrange;
+    }
+    .author-book-cover {
+      width: 72px;
+      height: 106px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: var(--background-selected);
+      box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+    }
+    .author-book-cover-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.1);
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .author-book-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--content-primary);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .author-book-count {
+      font-family: var(--monospace);
+      font-size: 10px;
+      color: DarkOrange;
+    }
+
+    :global(.quote-page-ad) {
+      margin-bottom: var(--spacing-07);
+      padding-top: var(--spacing-05);
+      border-top: 0.5px solid var(--border-muted);
+    }
+
+    .page-nav {
+      margin-top: var(--spacing-07);
+      padding-top: var(--spacing-05);
+      border-top: 0.5px solid var(--border-muted);
+    }
+    .back-link {
+      font-size: var(--desktop-body-sm);
+      color: var(--content-secondary);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--content-primary); }
+  </style>
+</Layout>

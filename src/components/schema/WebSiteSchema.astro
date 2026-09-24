@@ -1,0 +1,18 @@
+---
+interface Props {
+    url?: string;
+}
+
+const { url = "https://quotes.elhellal.com" } = Astro.props;
+
+const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "اقتباسات الهلال",
+    url: url,
+    description: "أجمل الاقتباسات العربية من أشهر الكتّاب والكتب",
+    publisher: { "@type": "Organization", name: "الهلال", url: "https://elhellal.com/" },
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

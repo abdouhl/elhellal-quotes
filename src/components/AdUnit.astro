@@ -1,0 +1,58 @@
+---
+export interface Props {
+    /** Ad unit slot ID from the AdSense dashboard */
+    slot: string;
+    format?: string;
+    /** e.g. "in-article" — set together with format="fluid" for native in-article units */
+    layout?: string;
+    /** data-ad-layout-key value for fluid in-feed units */
+    layoutKey?: string;
+    className?: string;
+    /** Space reserved (px) so the page doesn't jump when the ad renders. Defaults by format. */
+    minHeight?: number;
+}
+
+const { slot, format = "auto", layout, layoutKey, className = "", minHeight } = Astro.props;
+const reserved = minHeight ?? (layout === "in-article" ? 250 : 90);
+const insStyle = layout === "in-article" ? "display:block; text-align:center;" : "display:block";
+---
+
+<div class={`ad-unit ${className}`} style={`min-height:${reserved}px`} aria-label="إعلان">
+    <span class="ad-unit-label">إعلان</span>
+    <ins
+        class="adsbygoogle"
+        style={insStyle}
+        data-ad-client="ca-pub-3610150616518651"
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-ad-layout={layout}
+        data-ad-layout-key={layoutKey}
+        data-full-width-responsive={layout ? undefined : "true"}></ins>
+</div>
+
+<style>
+    .ad-unit {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+
+    .ad-unit-label {
+        font-family: var(--monospace);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+
+<style is:global>
+    /* Google marks a slot with no fill as unfilled — drop the whole box (label and
+       any wrapper card) instead of leaving an empty "إعلان" placeholder. Global so
+       it can also reach the pages' .adsense-slot wrappers. */
+    .ad-unit:has(ins.adsbygoogle[data-ad-status="unfilled"]),
+    .adsense-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+        display: none;
+    }
+</style>

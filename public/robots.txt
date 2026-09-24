@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://quotes.elhellal.com/sitemap-index.xml

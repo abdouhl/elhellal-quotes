@@ -1,0 +1,40 @@
+{
+  "name": "elhellal-quotes",
+  "version": "0.1.0",
+  "description": "اقتباسات عربية - Arabic quotes, a sibling site to elhellal.com",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "prepare-data": "bun run scripts/generate-quote-indices.ts",
+    "dev": "bun run prepare-data && astro dev",
+    "start": "astro dev",
+    "build": "bun run prepare-data && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check-data": "bun run scripts/check-data.ts",
+    "import-quotes": "bun run scripts/import-goodreads-quotes.ts",
+    "sync-book-summaries": "bun run scripts/sync-book-summaries.ts",
+    "sync-biographies": "bun run scripts/sync-biographies.ts",
+    "tiktok-quotes": "bun run scripts/generate-tiktok-quotes.ts",
+    "tweet-quote": "bun run scripts/generate-tweet-quote.ts",
+    "book-tweet": "bun run scripts/generate-book-tweet.ts"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.12",
+    "@astrojs/partytown": "^2.1.4",
+    "@astrojs/react": "^4.4.2",
+    "@astrojs/sitemap": "^3.7.0",
+    "astro": "^5.17.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@new-ui/foundations": "^0.3.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "node-html-parser": "^7.0.2",
+    "puppeteer": "^24.40.0",
+    "wrangler": "^4.67.0"
+  }
+}

@@ -1,0 +1,259 @@
+---
+import Layout from "../layouts/Layout.astro";
+import QuoteCard from "../components/QuoteCard";
+import BreadcrumbSchema from "../components/schema/BreadcrumbSchema.astro";
+import QuoteSchema from "../components/schema/QuoteSchema.astro";
+import { getQuotes, getQuoteAuthors, getQuoteBooks, getQuoteTags } from "../utils/quotes";
+import "../components/CardsContainer.css";
+
+const quotes = getQuotes();
+const authors = getQuoteAuthors();
+const books = getQuoteBooks();
+const tags = getQuoteTags();
+
+const canonicalUrl = "https://quotes.elhellal.com/";
+const breadcrumbs = [
+  { name: "الرئيسية", url: "https://elhellal.com" },
+  { name: "الاقتباسات" },
+];
+---
+
+<Layout
+  site="الهلال - الاقتباسات"
+  title="الهلال"
+  tagline="أجمل الاقتباسات العربية من أشهر الكتّاب والكتب"
+  pageTitle="اقتباسات أدبية وفكرية مترجمة | الهلال"
+  pageDescription={`تصفح ${quotes.length} اقتباساً أدبياً وفكرياً مترجماً إلى العربية، حسب الكاتب أو الكتاب أو الموضوع.`}
+  canonicalUrl={canonicalUrl}
+  ogTitle="اقتباسات أدبية وفكرية مترجمة | الهلال"
+  ogDescription={`${quotes.length} اقتباساً مترجماً إلى العربية`}
+  ogUrl={canonicalUrl}
+  ogType="website"
+>
+  <QuoteSchema quotes={quotes} url={canonicalUrl} />
+  <BreadcrumbSchema items={breadcrumbs} />
+
+  <main id="main-content" class="quotes-page">
+    <nav class="breadcrumb" aria-label="مسار التنقل">
+      <a href="https://elhellal.com/">الرئيسية</a>
+      <span aria-hidden="true">›</span>
+      <span>الاقتباسات</span>
+    </nav>
+
+    <header class="quotes-header">
+      <h1>الاقتباسات</h1>
+      <p>{quotes.length} اقتباساً أدبياً وفكرياً مترجماً إلى العربية</p>
+    </header>
+
+    {authors.length > 0 && (
+      <section class="quotes-browse">
+        <div class="quotes-browse-heading">
+          <h2>تصفح حسب الكاتب</h2>
+          <a href="/authors/" class="see-all-link">كل الكتّاب ←</a>
+        </div>
+        <ul role="list" class="browse-cloud">
+          {authors.slice(0, 40).map((a) => (
+            <li>
+              <a href={`/${encodeURIComponent(a.slug)}/`} class="browse-pill">
+                {a.author}
+                <span class="browse-pill-count">{a.quotes.length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {books.length > 0 && (
+      <section class="quotes-browse">
+        <div class="quotes-browse-heading">
+          <h2>تصفح حسب الكتاب</h2>
+          <a href="/books/" class="see-all-link">كل الكتب ←</a>
+        </div>
+        <ul role="list" class="book-cloud">
+          {books.slice(0, 12).map((b) => (
+            <li>
+              <a href={`/book/${encodeURIComponent(b.slug)}/`} class="book-cloud-item">
+                {b.cover ? (
+                  <img src={b.cover} alt={b.book} class="book-cloud-cover" loading="lazy" />
+                ) : (
+                  <span class="book-cloud-cover book-cloud-cover-fallback" aria-hidden="true">{b.book.trim().charAt(0)}</span>
+                )}
+                <span class="book-cloud-title">{b.book}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {tags.length > 0 && (
+      <section class="quotes-browse">
+        <div class="quotes-browse-heading">
+          <h2>تصفح حسب الموضوع</h2>
+          <a href="/tags/" class="see-all-link">كل المواضيع ←</a>
+        </div>
+        <ul role="list" class="browse-cloud">
+          {tags.slice(0, 60).map((t) => (
+            <li>
+              <a href={`/tag/${encodeURIComponent(t.slug)}/`} class="browse-pill">
+                {t.label}
+                <span class="browse-pill-count">{t.quotes.length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <section class="quotes-browse">
+      <h2>أحدث الاقتباسات</h2>
+      <ul role="list" class="link-card-grid">
+        {quotes.slice(0, 60).map((quote) => (
+          <QuoteCard client:visible quote={quote} />
+        ))}
+      </ul>
+    </section>
+  </main>
+
+  <style>
+    .quotes-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--desktop-caption);
+      font-family: var(--monospace);
+      color: var(--content-secondary);
+      margin-bottom: var(--spacing-06);
+    }
+    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--content-primary); }
+
+    .quotes-header {
+      margin-bottom: var(--spacing-07);
+    }
+    .quotes-header h1 {
+      margin: 0 0 var(--spacing-02) 0;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+    .quotes-header p {
+      margin: 0;
+      font-family: var(--monospace);
+      font-size: var(--desktop-body-sm);
+      color: var(--content-secondary);
+    }
+
+    .quotes-browse {
+      margin-bottom: var(--spacing-08);
+    }
+    .quotes-browse h2 {
+      margin: 0 0 var(--spacing-04) 0;
+      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+      color: DarkOrange;
+    }
+
+    .browse-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .browse-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 140, 0, 0.08);
+      border: 0.5px solid rgba(255, 140, 0, 0.25);
+      color: DarkOrange;
+      border-radius: 20px;
+      font-size: var(--desktop-body-sm);
+      text-decoration: none;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .browse-pill:hover {
+      background: rgba(255, 140, 0, 0.18);
+      transform: translateY(-1px);
+    }
+    .browse-pill-count {
+      font-family: var(--monospace);
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .quotes-browse-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--spacing-03);
+      margin-bottom: var(--spacing-04);
+    }
+    .quotes-browse-heading h2 { margin: 0; }
+    .see-all-link {
+      font-family: var(--monospace);
+      font-size: var(--desktop-caption);
+      color: var(--content-secondary);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .see-all-link:hover { color: DarkOrange; }
+
+    .book-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-04);
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .book-cloud-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 96px;
+      text-decoration: none;
+      text-align: center;
+    }
+    .book-cloud-cover {
+      width: 72px;
+      height: 106px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: var(--background-selected);
+      box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+      transition: transform 0.15s ease;
+    }
+    .book-cloud-item:hover .book-cloud-cover {
+      transform: translateY(-2px);
+    }
+    .book-cloud-cover-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.1);
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .book-cloud-title {
+      font-size: 11px;
+      color: var(--content-secondary);
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+  </style>
+</Layout>

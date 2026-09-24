@@ -1,0 +1,454 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { QuoteRow } from "../../components/QuoteCard";
+import AdUnit from "../../components/AdUnit.astro";
+import BreadcrumbSchema from "../../components/schema/BreadcrumbSchema.astro";
+import QuoteSchema from "../../components/schema/QuoteSchema.astro";
+import BookSchema from "../../components/schema/BookSchema.astro";
+import { getQuoteBooks, getQuoteTags } from "../../utils/quotes";
+import { slugifyTag } from "../../utils/tag-slug";
+import bookSummaries from "../../data/book-summaries.json";
+import { amazonSearchUrl, goodreadsSearchUrl, AMAZON_TAG } from "../../config/affiliates";
+
+export async function getStaticPaths() {
+  return getQuoteBooks().map((entry) => ({
+    params: { book: entry.slug },
+    props: { book: entry.book, author: entry.author, authorSlug: entry.authorSlug, cover: entry.cover, quotes: entry.quotes },
+  }));
+}
+
+const { book, author, authorSlug, cover, quotes } = Astro.props;
+const bookSlug = Astro.params.book as string;
+
+const authorUrl = `https://quotes.elhellal.com/${encodeURIComponent(authorSlug)}/`;
+const canonicalUrl = `https://quotes.elhellal.com/book/${encodeURIComponent(bookSlug)}/`;
+
+const otherBooksByAuthor = getQuoteBooks()
+  .filter((b) => b.authorSlug === authorSlug && b.slug !== bookSlug)
+  .slice(0, 8);
+
+const pageDescription = `${quotes.length} اقتباساً من كتاب "${book}" لـ${author}، مترجماً إلى العربية.`;
+
+// Header facts built from the page's own data: size, total likes, and the
+// topics its quotes are tagged with most (no invented blurb).
+const topicCounts = new Map<string, number>();
+for (const q of quotes) {
+  for (const t of q.tags ?? []) {
+    // Goodreads sometimes tags a quote with the book's own title — not a topic.
+    if (book.includes(t) || t.includes(book)) continue;
+    topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
+  }
+}
+const tagPages = new Set(getQuoteTags().map((t) => t.slug));
+const topTopics = [...topicCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .map(([label]) => {
+    const slug = slugifyTag(label);
+    return { label: label.replace(/_/g, " "), href: tagPages.has(slug) ? `/tag/${encodeURIComponent(slug)}/` : null };
+  });
+const totalLikes = quotes.reduce((sum, q) => sum + (q.likes ?? 0), 0);
+const formatCount = (n: number) => n.toLocaleString("en-US");
+
+const searchQuery = `${book} ${author}`;
+const buyLinks = [
+  { key: "amazon", label: "أمازون", href: amazonSearchUrl(searchQuery), sponsored: !!AMAZON_TAG },
+  { key: "goodreads", label: "جودريدز", href: goodreadsSearchUrl(searchQuery), sponsored: false },
+];
+
+// Set only when this book has a summary on books.elhellal.com (see `bun run sync-book-summaries`).
+const summarySlug = (bookSummaries as Record<string, string>)[bookSlug];
+const summaryUrl = summarySlug ? `https://books.elhellal.com/${encodeURIComponent(summarySlug)}/` : null;
+
+const breadcrumbs = [
+  { name: "الرئيسية", url: "https://elhellal.com" },
+  { name: "الاقتباسات", url: "https://quotes.elhellal.com/" },
+  { name: book },
+];
+---
+
+<Layout
+  site={`الهلال - اقتباسات من ${book}`}
+  title="الهلال"
+  tagline="أجمل الاقتباسات العربية من أشهر الكتّاب والكتب"
+  pageTitle={`اقتباسات من كتاب ${book} | الهلال`}
+  pageDescription={pageDescription}
+  canonicalUrl={canonicalUrl}
+  ogTitle={`اقتباسات من ${book} | الهلال`}
+  ogDescription={`${quotes.length} اقتباساً من ${book}`}
+  ogUrl={canonicalUrl}
+  ogImage={cover}
+  ogType="book"
+>
+  <BookSchema name={book} url={canonicalUrl} authorName={author} authorUrl={authorUrl} image={cover} description={pageDescription} />
+  <QuoteSchema quotes={quotes} url={canonicalUrl} />
+  <BreadcrumbSchema items={breadcrumbs} />
+
+  <main id="main-content" class="quote-book-page">
+    <nav class="breadcrumb" aria-label="مسار التنقل">
+      <a href="https://elhellal.com/">الرئيسية</a>
+      <span aria-hidden="true">›</span>
+      <a href="/">الاقتباسات</a>
+      <span aria-hidden="true">›</span>
+      <span>{book}</span>
+    </nav>
+
+    <header class="book-header">
+      {cover && <div class="book-backdrop" style={`background-image:url("${cover}")`} aria-hidden="true"></div>}
+      <div class="book-cover-wrap">
+        {cover ? (
+          <img src={cover} alt={book} class="book-cover-lg" loading="eager" />
+        ) : (
+          <span class="book-cover-lg book-cover-lg-fallback" aria-hidden="true">{book.trim().charAt(0)}</span>
+        )}
+      </div>
+      <div class="book-identity">
+        <span class="book-badge">كتاب</span>
+        <h1>{book}</h1>
+        <p class="book-author-line">
+          بقلم <a href={`/${encodeURIComponent(authorSlug)}/`} class="book-author-link">{author}</a>
+        </p>
+        <ul class="book-stats" role="list">
+          <li><strong>{quotes.length}</strong> اقتباساً</li>
+          {totalLikes > 0 && <li><strong>{formatCount(totalLikes)}</strong> إعجاب</li>}
+        </ul>
+        {topTopics.length > 0 && (
+          <ul class="book-topics" role="list" aria-label="أبرز المواضيع">
+            {topTopics.map((t) => (
+              <li>{t.href ? <a href={t.href}>{t.label}</a> : <span>{t.label}</span>}</li>
+            ))}
+          </ul>
+        )}
+        {summaryUrl && (
+          <a href={summaryUrl} class="book-summary-btn">اقرأ الملخص <span aria-hidden="true">←</span></a>
+        )}
+        <div class="book-buy">
+          {buyLinks.map((l) => (
+            <a href={l.href} target="_blank" rel={l.sponsored ? "sponsored nofollow noopener noreferrer" : "nofollow noopener noreferrer"} class={`book-buy-btn book-buy-btn--${l.key}`}>
+              {l.key === "amazon" ? "اشترِ من" : "على"} {l.label} <span aria-hidden="true">↗</span>
+            </a>
+          ))}
+        </div>
+        {AMAZON_TAG && <p class="book-buy-note">روابط الشراء قد تمنحنا عمولة صغيرة دون أي تكلفة إضافية عليك.</p>}
+      </div>
+    </header>
+
+    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
+
+    <section aria-label={`اقتباسات من كتاب ${book}`}>
+      <ul role="list" class="quote-row-list">
+        {quotes.map((quote) => (
+          <QuoteRow client:visible quote={quote} showAuthor={false} showBook={false} />
+        ))}
+      </ul>
+    </section>
+
+    {otherBooksByAuthor.length > 0 && (
+      <section class="other-books" aria-label={`كتب أخرى لـ ${author}`}>
+        <h2>كتب أخرى لـ{author}</h2>
+        <ul role="list" class="other-books-grid">
+          {otherBooksByAuthor.map((b) => (
+            <li>
+              <a href={`/book/${encodeURIComponent(b.slug)}/`} class="other-book-card">
+                {b.cover ? (
+                  <img src={b.cover} alt={b.book} class="other-book-cover" loading="lazy" />
+                ) : (
+                  <span class="other-book-cover other-book-cover-fallback" aria-hidden="true">{b.book.trim().charAt(0)}</span>
+                )}
+                <span class="other-book-title">{b.book}</span>
+                <span class="other-book-count">{b.quotes.length} اقتباساً</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <div class="page-nav">
+      <a href="/" class="back-link">كل الاقتباسات ←</a>
+    </div>
+  </main>
+
+  <style>
+    .quote-book-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing-06) var(--spacing-05) var(--spacing-10);
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--desktop-caption);
+      font-family: var(--monospace);
+      color: var(--content-secondary);
+      margin-bottom: var(--spacing-06);
+      flex-wrap: wrap;
+    }
+    .breadcrumb a { color: var(--content-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--content-primary); }
+
+    .book-header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-06);
+      margin-bottom: var(--spacing-07);
+      padding: var(--spacing-07) var(--spacing-06);
+      background: var(--background-secondary);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 16px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    /* Cover art blown up and blurred behind the content, dimmed so text stays legible. */
+    .book-backdrop {
+      position: absolute;
+      inset: -40px;
+      z-index: -2;
+      background-size: cover;
+      background-position: center;
+      filter: blur(48px) saturate(1.3);
+      opacity: 0.28;
+      transform: scale(1.1);
+    }
+    .book-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 70% 90% at 85% -10%, rgba(255, 140, 0, 0.14), transparent 70%),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55));
+      pointer-events: none;
+    }
+    .book-cover-wrap {
+      flex-shrink: 0;
+      perspective: 700px;
+    }
+    .book-cover-lg {
+      display: block;
+      width: 132px;
+      height: 192px;
+      object-fit: cover;
+      border-radius: 4px 8px 8px 4px;
+      box-shadow: 0px 14px 32px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(255, 255, 255, 0.14);
+      transform: rotateY(-6deg);
+      transition: transform 0.3s ease;
+    }
+    .book-cover-wrap:hover .book-cover-lg { transform: rotateY(0deg) scale(1.02); }
+    .book-cover-lg-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.12);
+      font-weight: 700;
+      font-size: 3rem;
+    }
+    .book-identity {
+      flex: 1;
+      min-width: 0;
+    }
+    .book-badge {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 2px 10px;
+      background: rgba(255, 140, 0, 0.12);
+      border: 0.5px solid rgba(255, 140, 0, 0.3);
+      color: DarkOrange;
+      border-radius: 10px;
+      font-family: var(--monospace);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .book-header h1 {
+      margin: 0 0 6px;
+      color: var(--content-primary);
+      font-size: clamp(1.5rem, 3.4vw, 2.2rem);
+      line-height: 1.3;
+    }
+    .book-author-line {
+      margin: 0 0 var(--spacing-04);
+      font-size: var(--desktop-body);
+      color: var(--content-secondary);
+    }
+    .book-author-link {
+      color: DarkOrange;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .book-author-link:hover { color: #ff9d33; }
+    .book-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-02) var(--spacing-05);
+      margin: 0 0 var(--spacing-04);
+      padding: 0;
+      list-style: none;
+      font-size: var(--desktop-body-sm);
+      color: var(--content-secondary);
+    }
+    .book-stats strong {
+      color: var(--content-primary);
+      font-family: var(--monospace);
+      font-size: 1.05em;
+    }
+    .book-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 var(--spacing-05);
+      padding: 0;
+      list-style: none;
+    }
+    .book-topics a,
+    .book-topics span {
+      display: inline-block;
+      padding: 3px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 0.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 12px;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .book-topics a:hover { background: rgba(255, 140, 0, 0.14); border-color: rgba(255, 140, 0, 0.4); color: DarkOrange; }
+    .book-summary-btn {
+      display: inline-block;
+      margin-bottom: var(--spacing-04);
+      padding: 9px 20px;
+      background: rgba(255, 140, 0, 0.14);
+      border: 0.5px solid rgba(255, 140, 0, 0.5);
+      border-radius: 8px;
+      color: DarkOrange;
+      font-size: var(--desktop-body-sm);
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .book-summary-btn:hover { background: DarkOrange; color: #111; }
+    .book-buy {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--spacing-02);
+    }
+    .book-buy-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 0.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      color: var(--content-primary);
+      font-size: var(--desktop-body-sm);
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .book-buy-btn:hover { background: rgba(255, 140, 0, 0.14); border-color: rgba(255, 140, 0, 0.4); color: DarkOrange; }
+    /* Amazon is the money link — give it the filled orange treatment. */
+    .book-buy-btn--amazon { background: DarkOrange; border-color: DarkOrange; color: #111; }
+    .book-buy-btn--amazon:hover { background: #ff9d33; border-color: #ff9d33; color: #111; }
+    .book-buy-note {
+      margin: var(--spacing-03) 0 0;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    @media (max-width: 600px) {
+      .book-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: var(--spacing-06) var(--spacing-05);
+        gap: var(--spacing-05);
+      }
+      .book-cover-lg { width: 110px; height: 160px; }
+      .book-stats, .book-topics, .book-buy { justify-content: center; }
+    }
+
+    :global(.quote-page-ad) {
+      margin-bottom: var(--spacing-07);
+      padding-top: var(--spacing-05);
+      border-top: 0.5px solid var(--border-muted);
+    }
+
+    .other-books {
+      margin-top: var(--spacing-08);
+    }
+    .other-books h2 {
+      margin: 0 0 var(--spacing-04) 0;
+      font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+      color: DarkOrange;
+    }
+    .other-books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--spacing-04);
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .other-book-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: var(--spacing-04) var(--spacing-02);
+      background: var(--background-secondary);
+      border: 0.5px solid var(--border-muted);
+      border-radius: 8px;
+      text-decoration: none;
+      text-align: center;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .other-book-card:hover {
+      transform: translateY(-2px);
+      border-color: DarkOrange;
+    }
+    .other-book-cover {
+      width: 72px;
+      height: 106px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: var(--background-selected);
+      box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+    }
+    .other-book-cover-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: DarkOrange;
+      background: rgba(255, 140, 0, 0.1);
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .other-book-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--content-primary);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .other-book-count {
+      font-family: var(--monospace);
+      font-size: 10px;
+      color: DarkOrange;
+    }
+
+    .page-nav {
+      margin-top: var(--spacing-07);
+      padding-top: var(--spacing-05);
+      border-top: 0.5px solid var(--border-muted);
+    }
+    .back-link {
+      font-size: var(--desktop-body-sm);
+      color: var(--content-secondary);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--content-primary); }
+  </style>
+</Layout>

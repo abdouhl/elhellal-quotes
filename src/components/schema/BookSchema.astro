@@ -1,0 +1,29 @@
+---
+interface Props {
+    name: string;
+    url: string;
+    authorName: string;
+    authorUrl?: string;
+    image?: string;
+    description?: string;
+}
+
+const { name, url, authorName, authorUrl, image, description } = Astro.props;
+
+const schema: any = {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    name,
+    url,
+    author: {
+        "@type": "Person",
+        name: authorName,
+        ...(authorUrl ? { url: authorUrl } : {}),
+    },
+};
+
+if (image) schema.image = image;
+if (description) schema.description = description;
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />
