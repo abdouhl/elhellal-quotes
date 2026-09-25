@@ -6,37 +6,50 @@ import { QuoteRow } from "../../components/QuoteCard";
 import AdUnit from "../../components/AdUnit.astro";
 import BreadcrumbSchema from "../../components/schema/BreadcrumbSchema.astro";
 import QuoteSchema from "../../components/schema/QuoteSchema.astro";
-import { loadQuoteShard } from "../../utils/quote-shard";
+import { loadQuoteShard, tagPageKey } from "../../utils/quote-shard";
 import type { FlatQuote } from "../../types";
 
 const tagSlug = Astro.params.tag as string;
 
 // Precomputed at build time by scripts/generate-quote-indices.ts (only tags
-// meeting MIN_QUOTES_PER_TAG are included) — one small static-asset fetch (one of
-// a fixed number of shards) instead of scanning + regex-extracting topics
-// from all ~15k quotes per request.
-const shard = await loadQuoteShard<{ label: string; quotes: FlatQuote[] }>("by-tag", tagSlug, Astro);
-const entry = shard?.[tagSlug];
+// meeting MIN_QUOTES_PER_TAG are included), split into fixed-size pages — one
+// small static-asset fetch per request instead of scanning all ~15k quotes,
+// and never parsing or rendering more than one page of quotes (the biggest
+// tags have 1,000+, which blew the Workers CPU budget).
+const pageParam = Astro.url.searchParams.get("page");
+const page = pageParam === null ? 1 : /^[1-9]\d{0,4}$/.test(pageParam) ? Number(pageParam) : NaN;
+const basePath = `/tag/${encodeURIComponent(tagSlug)}/`;
+if (pageParam === "1") {
+  return Astro.redirect(basePath, 301);
+}
+
+type TagPage = {
+  label: string;
+  total: number;
+  pages: number;
+  topAuthors: { name: string; slug: string; image?: string; count: number }[];
+  quotes: FlatQuote[];
+};
+const key = Number.isNaN(page) ? null : tagPageKey(tagSlug, page);
+const shard = key ? await loadQuoteShard<TagPage>("by-tag", key, Astro) : null;
+const entry = key ? shard?.[key] : undefined;
 
 if (!entry) {
   Astro.response.status = 404;
   return Astro.rewrite("/404");
 }
 
-const { label, quotes } = entry;
+// Tag pages only change on redeploy; let the browser and Cloudflare edge cache
+// them for a day so repeat hits don't cost Worker CPU. Set after the 404
+// branch so misses aren't cached.
+Astro.response.headers.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
 
-const canonicalUrl = `https://quotes.elhellal.com/tag/${encodeURIComponent(tagSlug)}/`;
+const { label, quotes, total, pages, topAuthors } = entry;
+const pageHref = (n: number) => (n === 1 ? basePath : `${basePath}?page=${n}`);
 
-// Top authors contributing to this topic — surfaces range and doubles as internal links.
-const authorCounts = new Map<string, { name: string; slug: string; image?: string; count: number }>();
-quotes.forEach((q) => {
-  const cur = authorCounts.get(q.authorSlug) || { name: q.author, slug: q.authorSlug, image: q.authorImage, count: 0 };
-  cur.count += 1;
-  authorCounts.set(q.authorSlug, cur);
-});
-const topAuthors = [...authorCounts.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+const canonicalUrl = `https://quotes.elhellal.com${pageHref(page)}`;
 
-const pageDescription = `${quotes.length} اقتباساً مترجماً إلى العربية عن "${label}"، من ${topAuthors.length} ${topAuthors.length === 1 ? 'كاتب' : 'كتّاب'} مختلفين.`;
+const pageDescription = `${total} اقتباساً مترجماً إلى العربية عن "${label}"، من ${topAuthors.length} ${topAuthors.length === 1 ? 'كاتب' : 'كتّاب'} مختلفين.`;
 
 const breadcrumbs = [
   { name: "الرئيسية", url: "https://elhellal.com" },
@@ -49,11 +62,11 @@ const breadcrumbs = [
   site={`الهلال - اقتباسات عن ${label}`}
   title="الهلال"
   tagline="أجمل الاقتباسات العربية من أشهر الكتّاب والكتب"
-  pageTitle={`اقتباسات عن ${label} | الهلال`}
+  pageTitle={page > 1 ? `اقتباسات عن ${label} - صفحة ${page} | الهلال` : `اقتباسات عن ${label} | الهلال`}
   pageDescription={pageDescription}
   canonicalUrl={canonicalUrl}
   ogTitle={`اقتباسات عن ${label} | الهلال`}
-  ogDescription={`${quotes.length} اقتباساً عن ${label}`}
+  ogDescription={`${total} اقتباساً عن ${label}`}
   ogUrl={canonicalUrl}
   ogType="website"
 >
@@ -74,7 +87,7 @@ const breadcrumbs = [
     <header class="tag-hero theme-night">
       <p class="eyebrow">اقتباسات عن</p>
       <h1 class="tag-title">{label}</h1>
-      <p class="page-lede">{quotes.length} اقتباساً من {topAuthors.length} {topAuthors.length === 1 ? 'كاتب' : 'كتّاب'}</p>
+      <p class="page-lede">{total} اقتباساً من {topAuthors.length} {topAuthors.length === 1 ? 'كاتب' : 'كتّاب'}</p>
       {topAuthors.length > 0 && (
         <ul class="chip-list" role="list" aria-label="أبرز الكُتّاب في هذا الموضوع">
           {topAuthors.map((a) => (
@@ -102,6 +115,14 @@ const breadcrumbs = [
         ))}
       </ul>
     </section>
+
+    {pages > 1 && (
+      <nav class="pager" aria-label="التنقل بين الصفحات">
+        {page > 1 && <a href={pageHref(page - 1)} rel="prev" class="chip">→ السابق</a>}
+        <span class="pager-status">صفحة {page} من {pages}</span>
+        {page < pages && <a href={pageHref(page + 1)} rel="next" class="chip">التالي ←</a>}
+      </nav>
+    )}
   </main>
 
   <style>
@@ -130,6 +151,14 @@ const breadcrumbs = [
       margin-top: 24px;
     }
     .chip--person { padding-inline-start: 6px; }
+    .pager {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: clamp(28px, 4vw, 44px);
+    }
+    .pager-status { color: var(--ink-2); font-size: 0.95rem; }
     .chip--person .chip-avatar { margin: 0; font-size: 11px; display: inline-flex; }
   </style>
 </Layout>

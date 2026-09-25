@@ -23,7 +23,7 @@ function sizeTier(text: string): 'xl' | 'lg' | 'md' | 'sm' {
  * Picture-quote palette: each card gets a stable colour from its id so the
  * wall reads like a mosaic of quote posters (about 40% stay plain paper).
  */
-const TONES = ['paper', 'night', 'paper', 'emerald', 'sand', 'paper', 'wine', 'clay', 'paper', 'indigo'] as const;
+const TONES = ['paper', 'night', 'paper', 'ember', 'sand', 'paper', 'night', 'amber', 'paper', 'ember'] as const;
 function toneFor(id: string): (typeof TONES)[number] {
     let h = 0;
     for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;

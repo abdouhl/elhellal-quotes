@@ -4,14 +4,24 @@
  * stay in sync with the build script — same hash, same SHARD_COUNT — or a
  * request would look up the wrong shard and always miss.
  */
-export const SHARD_COUNT = 64;
+// Kept high so each shard is small (~60–80KB): JSON-parsing a multi-MB shard
+// on every request is what blew the free-tier 10ms CPU budget.
+export const SHARD_COUNT = 1024;
+
+// Tag pages are paginated so no single request parses or renders more than
+// this many quotes (the largest tags have 1,000+).
+export const TAG_PAGE_SIZE = 30;
+
+export function tagPageKey(slug: string, page: number): string {
+    return `${slug}:${page}`;
+}
 
 export function shardOf(key: string): string {
     let hash = 5381;
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) + hash + key.charCodeAt(i)) >>> 0;
     }
-    return (hash % SHARD_COUNT).toString(16).padStart(2, '0');
+    return (hash % SHARD_COUNT).toString(16).padStart(3, '0');
 }
 
 /**

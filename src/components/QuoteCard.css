@@ -22,17 +22,14 @@
 
 /* ── Tones: each re-scopes the tokens so text, byline and actions follow ── */
 .qcard--night,
-.qcard--emerald,
-.qcard--wine,
-.qcard--clay,
-.qcard--indigo {
+.qcard--ember {
     --ink: #fbf6ec;
     --ink-2: rgba(251, 246, 236, 0.78);
     --ink-3: rgba(251, 246, 236, 0.6);
     --line: rgba(255, 255, 255, 0.16);
     --surface-2: rgba(255, 255, 255, 0.12);
-    --accent: #f1c979;
-    --accent-soft: rgba(241, 201, 121, 0.16);
+    --accent: #ffb347;
+    --accent-soft: rgba(255, 179, 71, 0.16);
     border-color: transparent;
 }
 .qcard--night {
@@ -40,22 +37,30 @@
         radial-gradient(1px 1px at 18% 20%, rgba(255,255,255,.6) 50%, transparent 51%),
         radial-gradient(1px 1px at 82% 34%, rgba(255,255,255,.45) 50%, transparent 51%),
         radial-gradient(1px 1px at 64% 78%, rgba(255,255,255,.35) 50%, transparent 51%),
-        radial-gradient(80% 70% at 0% 0%, rgba(230,183,92,.18), transparent 60%),
-        linear-gradient(160deg, #13203a, #0a1222);
+        radial-gradient(80% 70% at 0% 0%, rgba(255,140,0,.22), transparent 60%),
+        linear-gradient(160deg, #1a150f, #000);
 }
-.qcard--emerald { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.1), transparent 60%), linear-gradient(160deg, #175a4c, #0d3a31); }
-.qcard--wine    { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.1), transparent 60%), linear-gradient(160deg, #7a2439, #4a1022); }
-.qcard--clay    { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.14), transparent 60%), linear-gradient(160deg, #c2643a, #8f3b1c); }
-.qcard--indigo  { background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.1), transparent 60%), linear-gradient(160deg, #34408f, #1c2360); }
+.qcard--ember { background: radial-gradient(90% 70% at 100% 0%, rgba(255,179,71,.28), transparent 60%), linear-gradient(160deg, #7a3600, #1c0d00); }
+.qcard--amber {
+    --ink: #1a0c00;
+    --ink-2: rgba(26, 12, 0, 0.78);
+    --ink-3: rgba(26, 12, 0, 0.62);
+    --line: rgba(26, 12, 0, 0.16);
+    --surface-2: rgba(26, 12, 0, 0.08);
+    --accent: #1a0c00;
+    --accent-soft: rgba(26, 12, 0, 0.1);
+    border-color: transparent;
+    background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.3), transparent 60%), linear-gradient(135deg, #ffb347, #ff8c00);
+}
 .qcard--sand {
     --ink: #2b1d0c;
     --ink-2: #5e4a31;
     --ink-3: #8a7456;
     --line: rgba(80, 55, 20, 0.16);
     --surface-2: rgba(80, 55, 20, 0.08);
-    --accent: #9a5b0e;
+    --accent: #9a4600;
     border-color: transparent;
-    background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.5), transparent 60%), linear-gradient(160deg, #f3e4c4, #e6cfa1);
+    background: radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,.5), transparent 60%), linear-gradient(160deg, #fbe9d0, #f3d2a6);
 }
 
 .qcard-body {

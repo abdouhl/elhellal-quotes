@@ -20,24 +20,28 @@
 :root {
     color-scheme: light dark;
 
-    --paper: #f5f2ec;
+    --paper: #f7f3ed;
     --surface: #ffffff;
-    --surface-2: #eeeae2;
-    --ink: #15171c;
-    --ink-2: #4f535c;
-    --ink-3: #868a93;
-    --line: #e3dfd6;
-    --line-strong: #cfc9bc;
-    --accent: #a36d0c;
-    --accent-hover: #83560a;
-    --accent-soft: #f5ead3;
+    --surface-2: #efe9e0;
+    --ink: #14110d;
+    --ink-2: #4d463d;
+    --ink-3: #6f675c;
+    --line: #e6ded2;
+    --line-strong: #d2c7b7;
+    /* Brand: the elhellal crescent — #FFB347 → #FF8C00 on black. */
+    --brand: #ff8c00;
+    --brand-light: #ffb347;
+    --brand-grad: linear-gradient(135deg, #ffb347 0%, #ff8c00 100%);
+    --accent: #b35200;          /* brand orange darkened for AA text on paper */
+    --accent-hover: #8f4100;
+    --accent-soft: #fdeedb;
     --on-accent: #ffffff;
-    --gold: #e6b75c;
-    --night: #0b1324;
-    --night-2: #13203a;
-    --shadow-sm: 0 1px 2px rgba(15, 20, 35, 0.06), 0 1px 1px rgba(15, 20, 35, 0.04);
-    --shadow-md: 0 18px 40px -18px rgba(15, 20, 35, 0.35), 0 2px 6px rgba(15, 20, 35, 0.06);
-    --shadow-book: 0 12px 24px -8px rgba(15, 20, 35, 0.45), 0 2px 4px rgba(15, 20, 35, 0.2);
+    --gold: var(--brand);
+    --night: #0a0908;
+    --night-2: #17130e;
+    --shadow-sm: 0 1px 2px rgba(20, 14, 6, 0.06), 0 1px 1px rgba(20, 14, 6, 0.04);
+    --shadow-md: 0 18px 40px -18px rgba(20, 14, 6, 0.35), 0 2px 6px rgba(20, 14, 6, 0.06);
+    --shadow-book: 0 12px 24px -8px rgba(20, 14, 6, 0.45), 0 2px 4px rgba(20, 14, 6, 0.2);
 
     --font-quote: "Amiri", "Noto Naskh Arabic", "Times New Roman", serif;
     --font-ui: "ROM-Regular", system-ui, sans-serif;
@@ -61,20 +65,20 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --paper: #080d18;
-        --surface: #111a2c;
-        --surface-2: #1a2539;
-        --ink: #f2eee6;
-        --ink-2: #b3b8c4;
-        --ink-3: #7c8496;
-        --line: #1f2a40;
-        --line-strong: #2c3a55;
-        --accent: #e6b75c;
-        --accent-hover: #f1c979;
-        --accent-soft: rgba(230, 183, 92, 0.12);
-        --on-accent: #1a1204;
-        --night: #050a15;
-        --night-2: #0e182c;
+        --paper: #000000;
+        --surface: #121110;
+        --surface-2: #1c1a17;
+        --ink: #f5f0e8;
+        --ink-2: #bdb5a9;
+        --ink-3: #8a8277;
+        --line: #26221d;
+        --line-strong: #37312a;
+        --accent: #ff8c00;
+        --accent-hover: #ffb347;
+        --accent-soft: rgba(255, 140, 0, 0.12);
+        --on-accent: #140a00;
+        --night: #000000;
+        --night-2: #120d07;
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
         --shadow-md: 0 18px 40px -16px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.3);
         --shadow-book: 0 12px 24px -8px rgba(0, 0, 0, 0.8), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
@@ -86,15 +90,15 @@
 .theme-night {
     --surface: rgba(255, 255, 255, 0.06);
     --surface-2: rgba(255, 255, 255, 0.1);
-    --ink: #f6f1e7;
-    --ink-2: #c3c8d3;
-    --ink-3: #8b93a6;
+    --ink: #f7f1e8;
+    --ink-2: #cbc2b5;
+    --ink-3: #978d80;
     --line: rgba(255, 255, 255, 0.12);
     --line-strong: rgba(255, 255, 255, 0.22);
-    --accent: var(--gold);
-    --accent-hover: #f3cf85;
-    --accent-soft: rgba(230, 183, 92, 0.14);
-    --on-accent: #1a1204;
+    --accent: var(--brand);
+    --accent-hover: var(--brand-light);
+    --accent-soft: rgba(255, 140, 0, 0.14);
+    --on-accent: #140a00;
     color: var(--ink);
     background:
         radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,.55) 50%, transparent 51%),
@@ -104,11 +108,11 @@
         radial-gradient(1px 1px at 58% 32%, rgba(255,255,255,.3) 50%, transparent 51%),
         radial-gradient(1.5px 1.5px at 22% 86%, rgba(255,255,255,.3) 50%, transparent 51%),
         radial-gradient(1px 1px at 66% 90%, rgba(255,255,255,.4) 50%, transparent 51%),
-        radial-gradient(60% 80% at 100% 0%, rgba(230, 183, 92, 0.16), transparent 60%),
-        radial-gradient(70% 90% at 0% 100%, rgba(58, 92, 160, 0.28), transparent 60%),
+        radial-gradient(60% 80% at 100% 0%, rgba(255, 140, 0, 0.22), transparent 60%),
+        radial-gradient(70% 90% at 0% 100%, rgba(255, 179, 71, 0.08), transparent 60%),
         linear-gradient(180deg, var(--night) 0%, var(--night-2) 100%);
 }
-.theme-night ::selection { background: var(--gold); color: #1a1204; }
+.theme-night ::selection { background: var(--brand); color: #140a00; }
 
 /* ── Base ── */
 html {
@@ -498,7 +502,7 @@ a:hover { color: var(--accent-hover); }
     line-height: 1;
 }
 .brand-name span { color: var(--accent); }
-.brand-link img { filter: drop-shadow(0 0 10px rgba(230, 183, 92, 0.55)); }
+.brand-link img { filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.55)); }
 .site-nav {
     display: flex;
     align-items: center;

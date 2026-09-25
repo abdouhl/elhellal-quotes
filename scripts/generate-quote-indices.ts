@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import type { QuotesConfig, FlatQuote } from '../src/types/index.ts';
 import { normalizeTag, slugifyTag } from '../src/utils/tag-slug.ts';
 import { extractAlTopicWords, MIN_QUOTES_PER_TAG } from '../src/utils/quotes.ts';
-import { SHARD_COUNT, shardOf } from '../src/utils/quote-shard.ts';
+import { SHARD_COUNT, TAG_PAGE_SIZE, shardOf, tagPageKey } from '../src/utils/quote-shard.ts';
 
 // Precomputes everything the SSR quote routes (`quotes/[author]/[id].astro`
 // and `quotes/tag/[tag].astro`) need, so those routes do one cheap dynamic
@@ -99,7 +99,7 @@ try {
     let idBytes = 0;
     idShards.forEach((shard, idx) => {
         const json = JSON.stringify(shard);
-        fs.writeFileSync(path.join(byIdDir, `${idx.toString(16).padStart(2, '0')}.json`), json);
+        fs.writeFileSync(path.join(byIdDir, `${idx.toString(16).padStart(3, '0')}.json`), json);
         idBytes += json.length;
     });
 
@@ -127,19 +127,46 @@ try {
         extractAlTopicWords(quote.text).forEach((word) => addTag(quote, word));
     }
 
-    const tagShards: Record<string, { label: string; quotes: FlatQuote[] }>[] = Array.from({ length: SHARD_COUNT }, () => ({}));
+    // Each tag is split into TAG_PAGE_SIZE-quote pages, each stored under its
+    // own `slug:page` key, so a request only parses and renders one page. The
+    // header data (total count, top authors) is precomputed and repeated on
+    // every page since it's small.
+    type TagPage = {
+        label: string;
+        total: number;
+        pages: number;
+        topAuthors: { name: string; slug: string; image?: string; count: number }[];
+        quotes: FlatQuote[];
+    };
+    const tagShards: Record<string, TagPage>[] = Array.from({ length: SHARD_COUNT }, () => ({}));
     let tagFiles = 0;
     for (const entry of tagMap.values()) {
         if (entry.quotes.length < MIN_QUOTES_PER_TAG) continue; // matches the old runtime 404 threshold
-        const idx = parseInt(shardOf(entry.slug), 16);
-        tagShards[idx][entry.slug] = { label: entry.label, quotes: entry.quotes };
+        const authorCounts = new Map<string, { name: string; slug: string; image?: string; count: number }>();
+        for (const q of entry.quotes) {
+            const cur = authorCounts.get(q.authorSlug) || { name: q.author, slug: q.authorSlug, image: q.authorImage, count: 0 };
+            cur.count += 1;
+            authorCounts.set(q.authorSlug, cur);
+        }
+        const topAuthors = [...authorCounts.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+        const pages = Math.ceil(entry.quotes.length / TAG_PAGE_SIZE);
+        for (let page = 1; page <= pages; page++) {
+            const key = tagPageKey(entry.slug, page);
+            tagShards[parseInt(shardOf(key), 16)][key] = {
+                label: entry.label,
+                total: entry.quotes.length,
+                pages,
+                topAuthors,
+                quotes: entry.quotes.slice((page - 1) * TAG_PAGE_SIZE, page * TAG_PAGE_SIZE),
+            };
+        }
         tagFiles++;
     }
 
     let tagBytes = 0;
     tagShards.forEach((shard, idx) => {
         const json = JSON.stringify(shard);
-        fs.writeFileSync(path.join(byTagDir, `${idx.toString(16).padStart(2, '0')}.json`), json);
+        fs.writeFileSync(path.join(byTagDir, `${idx.toString(16).padStart(3, '0')}.json`), json);
         tagBytes += json.length;
     });
 
