@@ -106197,6 +106197,20 @@
           ]
         }
       ]
+    },
+    {
+      "slug": "روبرت-غرين",
+      "twitterHandle": "RobertGreene",
+      "name": "روبرت غرين",
+      "image": "https://pbs.twimg.com/profile_images/1424080335650758656/hT-EqNke_400x400.jpg",
+      "quotes": [
+        {
+          "id": "f4b7b9606957f3ae",
+          "text": "جرّب الشيء الذي لا تظن أنك مستعد له تماماً.",
+          "sourceUrl": "https://x.com/RobertGreene/status/2105719479565226367"
+        }
+      ],
+      "books": []
     }
   ]
 }

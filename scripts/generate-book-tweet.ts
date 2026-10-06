@@ -13,6 +13,7 @@
  *   bun run scripts/generate-book-tweet.ts --count 5          # a week of tweets in one go
  *   bun run scripts/generate-book-tweet.ts --book ساق-البامبو  # a specific book
  *   bun run scripts/generate-book-tweet.ts --date 2026-09-20
+ *   bun run scripts/generate-book-tweet.ts --month 10 2026    # one tweet per day, then copy them one by one
  *   bun run scripts/generate-book-tweet.ts --flip              # labels right-to-left
  *   bun run scripts/generate-book-tweet.ts --dry-run
  *   bun run scripts/generate-book-tweet.ts --reset-history
@@ -33,6 +34,9 @@
  * Enter in the terminal, and the two images are copied — paste them, post.
  * (X takes one kind of content per paste, hence two steps.) The clipboard is
  * for the last tweet if --count > 1. Pass --no-copy to skip it.
+ * With --month, every day of the month gets one tweet (days that already have
+ * one are reused), then the clipboard walks through them in order: text, Enter,
+ * images, Enter, next day's text… (type q + Enter to stop).
  */
 
 import puppeteer from 'puppeteer';
@@ -58,6 +62,8 @@ const RESET_HISTORY = args.includes('--reset-history');
 const FLIP = args.includes('--flip');
 const NO_COPY = args.includes('--no-copy');
 const DATE_OVERRIDE = getArg('--date'); // YYYY-MM-DD
+const MONTH_IDX = args.indexOf('--month');
+const MONTH = MONTH_IDX !== -1 ? { m: parseInt(args[MONTH_IDX + 1], 10), y: parseInt(args[MONTH_IDX + 2], 10) } : null;
 const QUOTES_FILE = getArg('--quotes-file') || path.join(__dirname, '../src/data/quotes.json');
 // Deliberately NOT under public/ — Astro copies everything in public/ into dist/, and these
 // images are for manual upload to X only; the site never serves them.
@@ -65,6 +71,14 @@ const OUT_ROOT = getArg('--out-dir') || path.join(__dirname, '../x-posts');
 const HISTORY_FILE = path.join(OUT_ROOT, 'history.json');
 const SITE = 'https://quotes.elhellal.com';
 
+if (MONTH && (!(MONTH.m >= 1 && MONTH.m <= 12) || !(MONTH.y >= 2000 && MONTH.y <= 2100))) {
+  console.error('❌  Usage: --month <1-12> <YYYY>, e.g. --month 10 2026');
+  process.exit(1);
+}
+if (MONTH && (BOOK_OVERRIDE || DATE_OVERRIDE)) {
+  console.error('❌  --month cannot be combined with --book or --date.');
+  process.exit(1);
+}
 if (!Number.isFinite(COUNT) || COUNT < 1 || COUNT > 30) {
   console.error('❌  --count must be a number between 1 and 30.');
   process.exit(1);
@@ -309,28 +323,60 @@ function copyFilesToClipboard(files: string[]): boolean {
 }
 
 /** Resolves on Enter — or immediately if stdin is closed/piped, so non-interactive runs never hang. */
-function waitForEnter(prompt: string): Promise<void> {
+function waitForEnter(prompt: string): Promise<string> {
   return new Promise((resolve) => {
+    let answer = '';
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.once('close', resolve);
-    rl.question(prompt, () => { rl.close(); });
+    rl.once('close', () => resolve(answer));
+    rl.question(prompt, (a) => { answer = a.trim(); rl.close(); });
   });
 }
 
-async function copyTweetToClipboard(dir: string) {
+/** Returns false if the clipboard isn't usable or the user typed q to stop. */
+async function copyTweetToClipboard(dir: string): Promise<boolean> {
   const text = fs.readFileSync(path.join(dir, 'tweet.txt'), 'utf-8');
   const images = ['1-book.png', '2-lesson.png'].map((f) => path.resolve(dir, f));
-  if (!copyTextToClipboard(text)) { console.warn('⚠️  Could not copy to the clipboard (macOS only).'); return; }
+  if (!copyTextToClipboard(text)) { console.warn('⚠️  Could not copy to the clipboard (macOS only).'); return false; }
   console.log('\n📋  Tweet text copied — paste it into the X composer (⌘V).');
-  await waitForEnter('    Then press Enter to copy the two images… ');
+  if ((await waitForEnter('    Then press Enter to copy the two images… ')).toLowerCase() === 'q') return false;
   if (copyFilesToClipboard(images)) console.log('🖼️   Both images copied (book, then lesson) — paste them (⌘V).');
   else console.warn('⚠️  Could not copy the images to the clipboard.');
+  return true;
+}
+
+/** A day folder already holding a finished book tweet (from an earlier --month run), if any. */
+function existingBookTweet(dayDir: string): string | null {
+  if (!fs.existsSync(dayDir)) return null;
+  for (const name of fs.readdirSync(dayDir).sort()) {
+    const dir = path.join(dayDir, name);
+    if (['1-book.png', '2-lesson.png', 'tweet.txt'].every((f) => fs.existsSync(path.join(dir, f)))) return dir;
+  }
+  return null;
+}
+
+function daysOfMonth(m: number, y: number): string[] {
+  const n = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return Array.from({ length: n }, (_, i) => `${y}-${String(m).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
 }
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 async function main() {
   const now = DATE_OVERRIDE ? new Date(`${DATE_OVERRIDE}T12:00:00Z`) : new Date();
   const dateKey = DATE_OVERRIDE || isoDate(now);
+
+  // One slot per tweet to build: --count tweets on one day, or one tweet per day with --month.
+  // In --month mode, days that already have a book tweet are reused (so a re-run resumes).
+  const ready: { dateKey: string; dir: string }[] = [];
+  let slots: string[] = Array(COUNT).fill(dateKey);
+  if (MONTH) {
+    slots = [];
+    for (const day of daysOfMonth(MONTH.m, MONTH.y)) {
+      const dir = existingBookTweet(path.join(OUT_ROOT, day));
+      if (dir) ready.push({ dateKey: day, dir });
+      else slots.push(day);
+    }
+  }
+  const NEEDED = slots.length;
 
   const all = loadCandidates();
   let pool: Candidate[];
@@ -343,16 +389,17 @@ async function main() {
   } else {
     const history = loadHistory();
     pool = all.filter((c) => !history.has(c.bookSlug));
-    if (pool.length < COUNT) {
+    if (pool.length < NEEDED) {
       console.log('🔁  Every book has been tweeted — history wrapped around to the top of the list.');
       pool = all;
     }
   }
 
-  console.log(`\n🐦  Building ${Math.min(COUNT, pool.length)} book tweet(s) for ${dateKey}\n`);
+  const label = MONTH ? `${MONTH.y}-${String(MONTH.m).padStart(2, '0')} (one per day, ${ready.length} already built)` : dateKey;
+  console.log(`\n🐦  Building ${Math.min(NEEDED, pool.length)} book tweet(s) for ${label}\n`);
 
   if (DRY_RUN) {
-    pool.slice(0, COUNT).forEach((c, i) => console.log(`   ${i + 1}. ${c.bookTitle} — ${c.author}\n      «${c.lesson}» (${c.likes} likes)`));
+    pool.slice(0, NEEDED).forEach((c, i) => console.log(`   ${i + 1}. ${c.bookTitle} — ${c.author}\n      «${c.lesson}» (${c.likes} likes)`));
     console.log('\n🧪  --dry-run: no files written, history not updated.');
     return;
   }
@@ -387,16 +434,19 @@ async function main() {
 
   const history = loadHistory();
   const made: Candidate[] = [];
+  const builtDirs: { dateKey: string; dir: string }[] = [];
   let lastDir = '';
   const dayDir = path.join(OUT_ROOT, dateKey);
 
   // Walk the ranked pool until enough tweets are built — a book whose cover can't be fetched is skipped.
   for (const c of pool) {
-    if (made.length >= COUNT) break;
+    if (made.length >= NEEDED) break;
     const coverUri = await fetchImageAsBase64(c.cover);
     if (!coverUri) { console.warn(`   ⚠️  Cover fetch failed for «${c.bookTitle}» — skipping.`); continue; }
 
-    const dir = path.join(dayDir, `${String(made.length + 1).padStart(2, '0')}-${c.bookSlug}`);
+    const slotDate = slots[made.length];
+    const index = MONTH ? 1 : made.length + 1;
+    const dir = path.join(OUT_ROOT, slotDate, `${String(index).padStart(2, '0')}-${c.bookSlug}`);
     fs.mkdirSync(dir, { recursive: true });
     await renderSlide(buildBookSlide(c, coverUri), path.join(dir, '1-book.png'));
     const { w, h } = await page.evaluate(() => {
@@ -412,25 +462,42 @@ async function main() {
     fs.writeFileSync(path.join(dir, 'tweet.txt'), buildTweetText(), 'utf-8');
     fs.writeFileSync(path.join(dir, 'reply.txt'), buildReplyText(c), 'utf-8');
     fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({
-      date: dateKey, generatedAt: new Date().toISOString(),
+      date: slotDate, generatedAt: new Date().toISOString(),
       book: c.bookTitle, bookSlug: c.bookSlug, author: c.author, lessonId: c.lessonId, lesson: c.lesson,
     }, null, 2), 'utf-8');
 
     console.log(`   ✅  ${path.relative(process.cwd(), dir)}/\n       «${c.lesson}»`);
     made.push(c);
+    builtDirs.push({ dateKey: slotDate, dir });
     lastDir = dir;
     if (!BOOK_OVERRIDE) history.add(c.bookSlug);
   }
 
   await browser.close();
 
-  if (made.length === 0) {
+  if (made.length === 0 && ready.length === 0) {
     console.error('❌  Nothing was generated.');
     process.exit(1);
   }
-  if (!BOOK_OVERRIDE) {
+  if (!BOOK_OVERRIDE && made.length > 0) {
     fs.mkdirSync(OUT_ROOT, { recursive: true });
     fs.writeFileSync(HISTORY_FILE, JSON.stringify([...history], null, 2), 'utf-8');
+  }
+
+  if (MONTH) {
+    const all = [...ready, ...builtDirs].sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+    if (made.length < NEEDED) console.warn(`⚠️  Only ${made.length} of ${NEEDED} missing day(s) could be built.`);
+    console.log(`\n🎉  Done — ${all.length} day(s) ready under ${path.relative(process.cwd(), OUT_ROOT)}/ (${made.length} new).`);
+    if (NO_COPY) return;
+    console.log('ℹ️   Walking through them in date order — type q then Enter at any prompt to stop.');
+    for (let i = 0; i < all.length; i++) {
+      const { dateKey: d, dir } = all[i];
+      console.log(`\n━━━ ${i + 1}/${all.length} · ${d} · ${path.basename(dir)} ━━━`);
+      if (!(await copyTweetToClipboard(dir))) return;
+      if (i < all.length - 1 && (await waitForEnter('    Press Enter for the next tweet… ')).toLowerCase() === 'q') return;
+    }
+    console.log('\n✅  All tweets copied.');
+    return;
   }
 
   console.log(`\n🎉  Done — ${made.length} tweet(s) in ${path.relative(process.cwd(), dayDir)}/`);
