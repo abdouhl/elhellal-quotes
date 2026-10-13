@@ -1,0 +1,8 @@
+# Read by the elhellal.com app (Explore tab) and by Chrome to let that app open
+# this site inside its own window (manifest scope_extensions).
+/app-feed.json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
+/.well-known/web-app-origin-association
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *

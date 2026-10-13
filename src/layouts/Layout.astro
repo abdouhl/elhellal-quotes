@@ -238,6 +238,9 @@ const navLinks = [
                     <ul>
                         <li><a href="https://elhellal.com/">المقالات</a></li>
                         <li><a href="https://books.elhellal.com/">ملخصات الكتب</a></li>
+                        <li><a href="https://biographies.elhellal.com/">السير الذاتية</a></li>
+                        <li><a href="https://quiz.elhellal.com/">اختبر معلوماتك</a></li>
+                        <li><a href="https://elhellal.com/app/?source=quotes">تطبيق الهلال</a></li>
                         <li><a href="https://elhellal.com/privacy/">الخصوصية</a></li>
                         <li><a href="https://elhellal.com/terms/">الشروط</a></li>
                     </ul>
@@ -248,7 +251,74 @@ const navLinks = [
                 </p>
             </div>
         </footer>
-    </body>
+        <!-- Points phone visitors to the elhellal.com app, which bundles this site
+         (its Explore tab reads /app-feed.json). Hidden when dismissed (30 days)
+         and inside an installed app. -->
+    <aside class="hellal-app-cta" id="hellal-app-cta" hidden>
+        <img src="https://elhellal.com/icon-192.png" width="40" height="40" alt="" />
+        <p><strong>تطبيق الهلال</strong> المقالات والاقتباسات والملخصات والسير والاختبار في تطبيق واحد، يعمل دون إنترنت.</p>
+        <a href="https://elhellal.com/app/?source=quotes">ثبّته</a>
+        <button type="button" aria-label="إغلاق">×</button>
+    </aside>
+    <style is:global>
+        .hellal-app-cta:not([hidden]) {
+            position: fixed;
+            z-index: 1000;
+            inset-inline: 12px;
+            bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 520px;
+            margin-inline: auto;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: #18123a;
+            color: #fff;
+            box-shadow: 0 6px 24px rgb(0 0 0 / 0.35);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .hellal-app-cta img { flex: none; border-radius: 10px; }
+        .hellal-app-cta p { flex: 1; margin: 0; }
+        .hellal-app-cta strong { display: block; }
+        .hellal-app-cta a {
+            flex: none;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: #fff;
+            color: #18123a;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .hellal-app-cta button {
+            flex: none;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+    </style>
+    <script is:inline>
+        (function () {
+            var KEY = "hellal-app-cta-dismissed";
+            var el = document.getElementById("hellal-app-cta");
+            var standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+            var dismissed = 0;
+            try { dismissed = Number(localStorage.getItem(KEY)) || 0; } catch (e) {}
+            if (!el || standalone || !matchMedia("(max-width: 760px)").matches || Date.now() - dismissed < 30 * 86400000) return;
+            setTimeout(function () { el.hidden = false; }, 4000);
+            el.querySelector("button").addEventListener("click", function () {
+                el.hidden = true;
+                try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+            });
+        })();
+    </script>
+</body>
 </html>
 
 <script is:inline>
