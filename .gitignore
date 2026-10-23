@@ -16,3 +16,6 @@ public/_quotes/
 # generated TikTok slideshows / X posts (manual-upload only, never served)
 /tiktok-slides/
 /x-posts/
+
+# plan files written by scripts/import-goodreads-book.ts
+/tmp/
