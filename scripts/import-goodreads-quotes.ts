@@ -25,6 +25,11 @@
  *   bun run scripts/import-goodreads-quotes.ts 1069006.Naval_Ravikant              # + a brand-new author
  *   bun run scripts/import-goodreads-quotes.ts 1069006.Naval_Ravikant 3389.Marcus_Aurelius
  *
+ * Append `:N` to a slug to keep at most N quotes for that author (the most-liked
+ * ones); it is saved on the author as `goodreadsLimit`, so later re-checks keep to
+ * it. `--only` skips the re-check of the other known authors.
+ *   bun run scripts/import-goodreads-quotes.ts --only 3565.Oscar_Wilde:50 9810.Albert_Einstein:120
+ *
  * A Goodreads author slug is the last path segment of their quotes page:
  *   https://www.goodreads.com/author/quotes/{slug}
  *
@@ -212,15 +217,16 @@ function slugForAuthor(config: QuotesConfig, name: string, goodreadsSlug: string
     return `${base}-${disambiguator}`;
 }
 
-function findOrCreateAuthor(config: QuotesConfig, goodreadsSlug: string, name: string, image: string | undefined): QuoteAuthor {
+function findOrCreateAuthor(config: QuotesConfig, goodreadsSlug: string, name: string, image: string | undefined, limit: number | undefined): QuoteAuthor {
     let author = config.authors.find((a) => a.goodreadsSlug === goodreadsSlug);
     if (!author) {
         const slug = slugForAuthor(config, name, goodreadsSlug);
-        author = { slug, goodreadsSlug, name, ...(image ? { image } : {}), quotes: [], books: [] };
+        author = { slug, goodreadsSlug, name, ...(image ? { image } : {}), ...(limit ? { goodreadsLimit: limit } : {}), quotes: [], books: [] };
         config.authors.push(author);
     } else {
         author.name = name;
         if (image) author.image = image;
+        if (limit) author.goodreadsLimit = limit;
     }
     return author;
 }
@@ -256,8 +262,16 @@ async function main() {
 
     const existingIds = collectExistingIds(quotesConfig);
     const knownAuthorSlugs = new Set(quotesConfig.authors.map((a) => a.goodreadsSlug).filter((s): s is string => !!s)); // tweet-only authors have no Goodreads slug
-    const cliSlugs = process.argv.slice(2);
-    const authorSlugs = [...new Set([...cliSlugs, ...knownAuthorSlugs])];
+    const args = process.argv.slice(2);
+    const only = args.includes('--only');
+    // `slug:N` caps that author at N quotes (saved as goodreadsLimit); a bare slug uses the saved limit or the default.
+    const cliLimits = new Map<string, number | undefined>();
+    for (const a of args.filter((x) => x !== '--only')) {
+        const [slug, n] = a.split(':');
+        cliLimits.set(slug!, n ? Math.max(1, parseInt(n, 10)) : undefined);
+    }
+    const cliSlugs = [...cliLimits.keys()];
+    const authorSlugs = only ? cliSlugs : [...new Set([...cliSlugs, ...knownAuthorSlugs])];
 
     if (authorSlugs.length === 0) {
         console.log('No author slugs on the CLI and none found in quotes.json. Pass at least one Goodreads author slug.');
@@ -279,15 +293,18 @@ async function main() {
             ? existingAuthor.quotes.length + existingAuthor.books.reduce((n, b) => n + b.quotes.length, 0)
             : 0;
         let authorTotalCount = existingCount;
-        if (existingCount >= MAX_QUOTES_PER_AUTHOR) {
-            console.log(`   ⏭️  already has ${existingCount} quotes (cap ${MAX_QUOTES_PER_AUTHOR}) — skipping\n`);
+        const cliLimit = cliLimits.get(authorSlug);
+        const cap = cliLimit ?? existingAuthor?.goodreadsLimit ?? MAX_QUOTES_PER_AUTHOR;
+        if (existingCount >= cap) {
+            if (cliLimit && existingAuthor) existingAuthor.goodreadsLimit = cliLimit;
+            console.log(`   ⏭️  already has ${existingCount} quotes (cap ${cap}) — skipping\n`);
             continue;
         }
 
         let scraped: ScrapedQuote[];
         let authorInfo: AuthorInfo | null;
         try {
-            const result = await fetchAllQuotesForAuthor(authorSlug, MAX_QUOTES_PER_AUTHOR - existingCount);
+            const result = await fetchAllQuotesForAuthor(authorSlug, cap - existingCount);
             scraped = result.quotes;
             authorInfo = result.authorInfo;
         } catch (e: any) {
@@ -311,15 +328,15 @@ async function main() {
             failed++;
             continue;
         }
-        const authorEntry = findOrCreateAuthor(quotesConfig, authorSlug, authorName, authorInfo.image);
+        const authorEntry = findOrCreateAuthor(quotesConfig, authorSlug, authorName, authorInfo.image, cliLimit);
         console.log(`   found ${scraped.length} quote(s) by ${authorName} on Goodreads (source: ${sourceIsArabic ? 'Arabic — kept verbatim' : 'non-Arabic — translating'})`);
 
         const bookTitleCache = new Map<string, string>();
         const bookCoverCache = new Map<string, string | undefined>();
 
         for (const q of scraped) {
-            if (authorTotalCount >= MAX_QUOTES_PER_AUTHOR) {
-                console.log(`   ⏭️  reached cap of ${MAX_QUOTES_PER_AUTHOR} quotes for ${authorName} — stopping`);
+            if (authorTotalCount >= cap) {
+                console.log(`   ⏭️  reached cap of ${cap} quotes for ${authorName} — stopping`);
                 break;
             }
 
@@ -334,7 +351,7 @@ async function main() {
                 let bookEntry: QuoteBook | undefined;
                 if (q.bookRaw) {
                     if (!bookTitleCache.has(q.bookRaw)) {
-                        bookTitleCache.set(q.bookRaw, sourceIsArabic ? q.bookRaw : await translateName(q.bookRaw));
+                        bookTitleCache.set(q.bookRaw, sourceIsArabic || isArabicText(q.bookRaw) ? q.bookRaw : await translateName(q.bookRaw));
                     }
                     if (!bookCoverCache.has(q.bookRaw)) {
                         const cover = q.bookHref ? await fetchBookCover(q.bookHref) : undefined;
@@ -348,7 +365,8 @@ async function main() {
                 // Resolve text + tags — verbatim (just cleaned) if Arabic, else translated.
                 let text: string;
                 let tags: string[] | undefined;
-                if (sourceIsArabic) {
+                // Arabic quotes stay verbatim even under a Latin-spelled author name.
+                if (sourceIsArabic || isArabicText(q.textRaw)) {
                     text = q.textRaw;
                     tags = q.tags.length ? await translateTags(q.tags, tagCache) : undefined;
                 } else {

@@ -19,6 +19,7 @@ export interface QuoteAuthor {
     twitterHandle?: string;      // X/Twitter screen_name (no @), set for authors added by scripts/generate-tweet-quote.ts
     name: string;                // Arabic author name
     image?: string;               // goodreads author photo URL
+    goodreadsLimit?: number;      // max quotes to keep from Goodreads (set from the admin panel / `slug:N`); default 500
     quotes: QuoteItem[];          // quotes not tagged with a specific book
     books: QuoteBook[];
 }
