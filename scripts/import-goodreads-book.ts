@@ -24,7 +24,7 @@ import fs from 'fs';
 import path from 'path';
 import type { QuotesConfig, QuoteAuthor, QuoteBook, QuoteItem } from '../src/types/index.ts';
 import { slugifyTag } from '../src/utils/tag-slug.ts';
-import { PAGE_DELAY_MS, extractAuthorInfo, fetchPage, isArabicText, makeId, parseQuotes, sleep, toHiResGoodreadsImage, type Html, type ScrapedQuote } from './lib/goodreads.ts';
+import { PAGE_DELAY_MS, extractAuthorInfo, fetchPage, isArabicText, makeId, parseQuotes, sleep, toHiResGoodreadsImage, findGoodreadsAuthor, addGoodreadsAlias, type Html, type ScrapedQuote } from './lib/goodreads.ts';
 
 const QUOTES_PATH = path.join(import.meta.dir, '../src/data/quotes.json');
 const DEFAULT_PLAN = path.join(import.meta.dir, '../tmp/book-import.json');
@@ -86,7 +86,7 @@ async function fetchPlan(query: string, limit: number): Promise<BookPlan> {
 
     const config = readQuotes();
     const stored = allIds(config);
-    const existing = config.authors.find((a) => a.goodreadsSlug === authorGoodreadsSlug);
+    const existing = findGoodreadsAuthor(config.authors, authorGoodreadsSlug);
 
     // Goodreads lists a work's quotes most-liked first, every language mixed together.
     const scraped: ScrapedQuote[] = [];
@@ -156,7 +156,7 @@ function apply(plan: BookPlan) {
     const nameSlug = slugifyTag(name);
 
     // The Goodreads slug identifies the author; failing that, an entry added under the same name (e.g. from a tweet).
-    let author: QuoteAuthor | undefined = config.authors.find((a) => a.goodreadsSlug === plan.source.authorGoodreadsSlug)
+    let author: QuoteAuthor | undefined = findGoodreadsAuthor(config.authors, plan.source.authorGoodreadsSlug, name)
         ?? config.authors.find((a) => !a.goodreadsSlug && a.slug === nameSlug);
     const newAuthor = !author;
     if (!author) {
@@ -165,7 +165,7 @@ function apply(plan: BookPlan) {
         author = { slug, goodreadsSlug: plan.source.authorGoodreadsSlug, name, ...(plan.author.image ? { image: plan.author.image } : {}), quotes: [], books: [] };
         config.authors.push(author);
     } else {
-        author.goodreadsSlug ??= plan.source.authorGoodreadsSlug;
+        addGoodreadsAlias(author, plan.source.authorGoodreadsSlug);
         if (!author.image && plan.author.image) author.image = plan.author.image;
     }
 

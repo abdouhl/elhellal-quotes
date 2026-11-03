@@ -41,7 +41,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import type { QuotesConfig, QuoteAuthor, QuoteBook, QuoteItem } from '../src/types/index.ts';
 import { slugifyTag } from '../src/utils/tag-slug.ts';
-import { PAGE_DELAY_MS, fetchBookCover, fetchPage, extractAuthorInfo, isArabicText, makeId, parseQuotes, type AuthorInfo, type ScrapedQuote } from './lib/goodreads.ts';
+import { PAGE_DELAY_MS, fetchBookCover, fetchPage, extractAuthorInfo, isArabicText, makeId, parseQuotes, type AuthorInfo, type ScrapedQuote, findGoodreadsAuthor, addGoodreadsAlias } from './lib/goodreads.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -218,14 +218,19 @@ function slugForAuthor(config: QuotesConfig, name: string, goodreadsSlug: string
 }
 
 function findOrCreateAuthor(config: QuotesConfig, goodreadsSlug: string, name: string, image: string | undefined, limit: number | undefined): QuoteAuthor {
-    let author = config.authors.find((a) => a.goodreadsSlug === goodreadsSlug);
+    // Goodreads often has two profiles for one person (e.g. "5835922.Naguib_Mahfouz" and "4273240._"):
+    // a profile we don't know yet joins the author with the same name instead of duplicating them.
+    let author = findGoodreadsAuthor(config.authors, goodreadsSlug, name);
     if (!author) {
         const slug = slugForAuthor(config, name, goodreadsSlug);
         author = { slug, goodreadsSlug, name, ...(image ? { image } : {}), ...(limit ? { goodreadsLimit: limit } : {}), quotes: [], books: [] };
         config.authors.push(author);
     } else {
-        author.name = name;
-        if (image) author.image = image;
+        const isMain = !author.goodreadsSlug || author.goodreadsSlug === goodreadsSlug;
+        addGoodreadsAlias(author, goodreadsSlug);
+        // An alias profile doesn't rename the author or swap their photo.
+        if (isMain) author.name = name;
+        if (image && (isMain || !author.image)) author.image = image;
         if (limit) author.goodreadsLimit = limit;
     }
     return author;
@@ -261,7 +266,7 @@ async function main() {
     }
 
     const existingIds = collectExistingIds(quotesConfig);
-    const knownAuthorSlugs = new Set(quotesConfig.authors.map((a) => a.goodreadsSlug).filter((s): s is string => !!s)); // tweet-only authors have no Goodreads slug
+    const knownAuthorSlugs = new Set(quotesConfig.authors.flatMap((a) => [a.goodreadsSlug, ...(a.goodreadsAliases ?? [])]).filter((s): s is string => !!s)); // tweet-only authors have no Goodreads slug
     const args = process.argv.slice(2);
     const only = args.includes('--only');
     // `slug:N` caps that author at N quotes (saved as goodreadsLimit); a bare slug uses the saved limit or the default.
@@ -288,7 +293,7 @@ async function main() {
     for (const authorSlug of authorSlugs) {
         process.stdout.write(`🔎 ${authorSlug}\n`);
 
-        const existingAuthor = quotesConfig.authors.find((a) => a.goodreadsSlug === authorSlug);
+        const existingAuthor = findGoodreadsAuthor(quotesConfig.authors, authorSlug);
         const existingCount = existingAuthor
             ? existingAuthor.quotes.length + existingAuthor.books.reduce((n, b) => n + b.quotes.length, 0)
             : 0;
@@ -329,6 +334,11 @@ async function main() {
             continue;
         }
         const authorEntry = findOrCreateAuthor(quotesConfig, authorSlug, authorName, authorInfo.image, cliLimit);
+        if (authorEntry !== existingAuthor) {
+            // Joined an author under another Goodreads profile: their quotes count toward the same cap.
+            authorTotalCount = authorEntry.quotes.length + authorEntry.books.reduce((n, b) => n + b.quotes.length, 0);
+            if (authorTotalCount) console.log(`   🔗 same person as ${authorEntry.name} (${authorEntry.goodreadsSlug}) — merging into that author`);
+        }
         console.log(`   found ${scraped.length} quote(s) by ${authorName} on Goodreads (source: ${sourceIsArabic ? 'Arabic — kept verbatim' : 'non-Arabic — translating'})`);
 
         const bookTitleCache = new Map<string, string>();

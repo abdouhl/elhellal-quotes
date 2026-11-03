@@ -16,6 +16,7 @@ export interface QuoteBook {
 export interface QuoteAuthor {
     slug: string;               // human-readable slug generated from the Arabic name, used for /[author]
     goodreadsSlug?: string;      // original Goodreads author slug (e.g. "1069006.Naval_Ravikant") — only used to re-fetch/dedupe against Goodreads, never in a URL. Absent for authors added from tweets.
+    goodreadsAliases?: string[];  // other Goodreads profiles of the same person (Goodreads often has a Latin- and an Arabic-named one); their quotes are imported into this author too
     twitterHandle?: string;      // X/Twitter screen_name (no @), set for authors added by scripts/generate-tweet-quote.ts
     name: string;                // Arabic author name
     image?: string;               // goodreads author photo URL

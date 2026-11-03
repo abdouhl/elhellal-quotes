@@ -12,6 +12,33 @@ export const FETCH_TIMEOUT_MS = 30_000;
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// ─── Authors ────────────────────────────────────────────────────────────────────
+
+/**
+ * An author name folded for matching: no diacritics/tatweel, alef/ta-marbuta/ya
+ * variants unified, a leading "ال" dropped from each word ("الطيب صالح" = "طيب صالح").
+ */
+export function foldAuthorName(s: string): string {
+    return s.replace(/[\u064B-\u0652\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
+        .replace(/[\s,،.\-_]+/g, ' ').trim().toLowerCase()
+        .split(' ').map((w) => (w.length > 3 && w.startsWith('ال') ? w.slice(2) : w)).join(' ');
+}
+
+/** The stored author a Goodreads profile belongs to: by slug or alias, else (given a name) by folded name. */
+export function findGoodreadsAuthor<A extends { goodreadsSlug?: string; goodreadsAliases?: string[]; name: string }>(authors: A[], goodreadsSlug: string, name?: string): A | undefined {
+    const bySlug = authors.find((a) => a.goodreadsSlug === goodreadsSlug || a.goodreadsAliases?.includes(goodreadsSlug));
+    if (bySlug || !name) return bySlug;
+    const folded = foldAuthorName(name);
+    return folded ? authors.find((a) => foldAuthorName(a.name) === folded) : undefined;
+}
+
+/** Records another Goodreads profile of the same person on an author. */
+export function addGoodreadsAlias(author: { goodreadsSlug?: string; goodreadsAliases?: string[] }, goodreadsSlug: string): void {
+    if (!author.goodreadsSlug) { author.goodreadsSlug = goodreadsSlug; return; }
+    if (author.goodreadsSlug === goodreadsSlug || author.goodreadsAliases?.includes(goodreadsSlug)) return;
+    (author.goodreadsAliases ??= []).push(goodreadsSlug);
+}
+
 // ─── Text cleanup ───────────────────────────────────────────────────────────────
 
 /** Decodes the handful of HTML entities Goodreads' raw quote text nodes contain. */
