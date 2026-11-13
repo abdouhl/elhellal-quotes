@@ -1,0 +1,84 @@
+---
+// Ad loader shared by the elhellal sister sites (ported from elhellal.com's Layout).
+// Funding Choices (Google's consent platform: the GDPR message in AdSense › Privacy &
+// messaging) runs first, then AdSense, so the consent API (__tcfapi) exists before any
+// ad request. Both load on the first scroll/tap/key press, or 3s after load once the
+// browser is idle, so they don't compete with first paint. adsbygoogle.push({}) calls
+// made before that just queue.
+//
+// Flags on <html>: data-no-ads on noindex pages (low-value for AdSense, slots hidden),
+// data-ads-blocked when the script fails (blocker), which collapses the reserved boxes.
+// Pages framed by the elhellal.com app (data-embedded) load no ads at all.
+---
+
+<script is:inline>
+    (function () {
+        var root = document.documentElement;
+        var robots = document.querySelector('meta[name="robots"]');
+        if (robots && /noindex/i.test(robots.content)) root.setAttribute("data-no-ads", "");
+        else root.removeAttribute("data-no-ads");
+        if (window.__elhellalAdsBoot) return;
+        window.__elhellalAdsBoot = true;
+        try {
+            if (window.top !== window.self) return;
+        } catch (e) {
+            return;
+        }
+        if (root.hasAttribute("data-embedded")) return;
+        // Tells Funding Choices the page is ready for its message.
+        (function signal() {
+            if (window.frames["googlefcPresent"]) return;
+            if (!document.body) return setTimeout(signal, 0);
+            var f = document.createElement("iframe");
+            f.style.cssText = "width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;display:none";
+            f.name = "googlefcPresent";
+            document.body.appendChild(f);
+        })();
+        var events = ["scroll", "pointerdown", "keydown", "touchstart"];
+        var started = false;
+        function inject(src, crossOrigin, done) {
+            var s = document.createElement("script");
+            s.async = true;
+            s.src = src;
+            if (crossOrigin) s.crossOrigin = "anonymous";
+            if (done) s.onload = s.onerror = done;
+            document.head.appendChild(s);
+        }
+        function start() {
+            if (started) return;
+            started = true;
+            events.forEach(function (e) {
+                window.removeEventListener(e, start, { passive: true });
+            });
+            inject("https://fundingchoicesmessages.google.com/i/pub-3610150616518651?ers=1", false, function () {
+                inject("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3610150616518651", true, function (ev) {
+                    if (ev && ev.type === "error") {
+                        window.__elhellalAdsBlocked = true;
+                        root.setAttribute("data-ads-blocked", "");
+                    }
+                });
+            });
+        }
+        events.forEach(function (e) {
+            window.addEventListener(e, start, { passive: true });
+        });
+        function whenIdle() {
+            setTimeout(function () {
+                if (window.requestIdleCallback) window.requestIdleCallback(start, { timeout: 2000 });
+                else start();
+            }, 3000);
+        }
+        if (document.readyState === "complete") whenIdle();
+        else window.addEventListener("load", whenIdle);
+    })();
+</script>
+
+<style is:global>
+    html[data-no-ads] .ad-unit,
+    html[data-no-ads] .adsense-slot,
+    html[data-ads-blocked] .ad-unit,
+    html[data-ads-blocked] .adsense-slot,
+    html[data-embedded] .ad-unit {
+        display: none !important;
+    }
+</style>

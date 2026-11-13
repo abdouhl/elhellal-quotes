@@ -3,6 +3,7 @@ import { ViewTransitions } from "astro:transitions";
 import WebSiteSchema from "../components/schema/WebSiteSchema.astro";
 import "@new-ui/foundations";
 import "../styles/global.css";
+import AdsLoader from "../components/AdsLoader.astro";
 
 const DEFAULT_OG_IMAGE = "https://elhellal.com/og-image.jpg";
 
@@ -62,32 +63,6 @@ const navLinks = [
 <html lang="ar" dir="rtl">
     
     <head>
-        <!-- Google Funding Choices (ad-blocking recovery / Offerwall consent) — must load as early as possible in <head>, unprocessed and unbundled -->
-        <script async is:inline src="https://fundingchoicesmessages.google.com/i/pub-3610150616518651?ers=1"></script>
-        <script is:inline>
-            (function () {
-                function signalGooglefcPresent() {
-                    if (!window.frames["googlefcPresent"]) {
-                        if (document.body) {
-                            const iframe = document.createElement("iframe");
-                            iframe.style.width = "0";
-                            iframe.style.height = "0";
-                            iframe.style.border = "none";
-                            iframe.style.zIndex = "-1000";
-                            iframe.style.left = "-1000px";
-                            iframe.style.top = "-1000px";
-                            iframe.style.display = "none";
-                            iframe.name = "googlefcPresent";
-                            document.body.appendChild(iframe);
-                        } else {
-                            setTimeout(signalGooglefcPresent, 0);
-                        }
-                    }
-                }
-                signalGooglefcPresent();
-            })();
-        </script>
-
         <meta charset="UTF-8" />
 
         <meta name="Petal-Search-site-verification" content="c47eb5a00e" />
@@ -164,12 +139,8 @@ const navLinks = [
             gtag("config", "G-MLVB12BM2C");
         </script>
 
-        <!-- Google AdSense (runs on the main thread — ad rendering needs direct DOM access, so it can't go through Partytown) -->
-        <script
-            async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3610150616518651"
-            crossorigin="anonymous"
-        ></script>
+        <!-- Consent (Funding Choices) then AdSense, deferred until interaction or idle. -->
+        <AdsLoader />
 
         <ViewTransitions />
         <WebSiteSchema url="https://quotes.elhellal.com" />
@@ -371,6 +342,9 @@ const navLinks = [
                 ) {
                     continue;
                 }
+                // Hidden (noindex page, blocked): push({}) would hand it this request
+                // and leave the visible slot empty, so take it out of the queue.
+                if (!ins.offsetParent) { ins.remove(); continue; }
                 ins.dataset.adRequested = "1";
                 (window.adsbygoogle = window.adsbygoogle || []).push({});
             }
@@ -405,6 +379,9 @@ const navLinks = [
 
         // Core Initialization (Runs on every page load including initial)
         const init = () => {
+            // View transitions keep <html>: re-flag noindex pages (no ads there).
+            const robots = document.querySelector('meta[name="robots"]');
+            document.documentElement.toggleAttribute("data-no-ads", !!robots && /noindex/i.test(robots.content));
             loadAds();
         };
 

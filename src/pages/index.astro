@@ -1,4 +1,5 @@
 ---
+import AdUnit from "../components/AdUnit.astro";
 import Layout from "../layouts/Layout.astro";
 import QuoteCard from "../components/QuoteCard";
 import BreadcrumbSchema from "../components/schema/BreadcrumbSchema.astro";
@@ -137,10 +138,24 @@ const breadcrumbs = [
         <span class="section-note">الأكثر إعجاباً من كل كاتب</span>
       </div>
       <ul role="list" class="link-card-grid">
-        {wall.map((quote) => (
+        {wall.slice(0, 12).map((quote) => (
           <QuoteCard client:visible quote={quote} />
         ))}
       </ul>
+      {/* Between two walls, never inside one: the grid is CSS columns, so a resizing
+          ad in it would reflow every card. */}
+      {wall.length > 12 && (
+        <div class="home-ad">
+          <AdUnit slot="9311881217" minHeight={250} mobileMinHeight={280} />
+        </div>
+      )}
+      {wall.length > 12 && (
+        <ul role="list" class="link-card-grid">
+          {wall.slice(12).map((quote) => (
+            <QuoteCard client:visible quote={quote} />
+          ))}
+        </ul>
+      )}
     </section>
 
     {authors.length > 0 && (

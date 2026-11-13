@@ -597,6 +597,7 @@ a:hover { color: var(--accent-hover); }
 /* ── Ads ── */
 .ad-unit-label { color: var(--ink-3) !important; }
 .quote-page-ad { margin: 40px 0; }
+.home-ad { margin: 32px 0; }
 /* In-list ads on author / book / tag pages. Keep the padding: with the row's own
    28px it leaves ~56px between an ad and the copy/share buttons on touch. */
 .qrow-ad {
@@ -606,4 +607,12 @@ a:hover { color: var(--accent-hover); }
 /* Room for an Auto ads anchor so it never covers the footer or the tag pager. */
 @media (max-width: 720px) {
     .footer { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); }
+}
+
+/* Phones: list/footer links were 15-22px tall, under the 24px minimum tap target. */
+@media (max-width: 48rem) {
+    .breadcrumb a, .qrow-book, .footer-col a, .footer-copy a, .qcard-name, .qcard-book, .hero-quote-author {
+        display: inline-block;
+        padding-block: 5px;
+    }
 }
