@@ -10,14 +10,17 @@ export interface Props {
     className?: string;
     /** Space reserved (px) so the page doesn't jump when the ad renders. Defaults by format. */
     minHeight?: number;
+    /** Reserved space at ≤480px, where responsive units render taller. Defaults to minHeight. */
+    mobileMinHeight?: number;
 }
 
-const { slot, format = "auto", layout, layoutKey, className = "", minHeight } = Astro.props;
+const { slot, format = "auto", layout, layoutKey, className = "", minHeight, mobileMinHeight } = Astro.props;
 const reserved = minHeight ?? (layout === "in-article" ? 250 : 90);
+const reservedMobile = mobileMinHeight ?? reserved;
 const insStyle = layout === "in-article" ? "display:block; text-align:center;" : "display:block";
 ---
 
-<div class={`ad-unit ${className}`} style={`min-height:${reserved}px`} aria-label="إعلان">
+<div class={`ad-unit ${className}`} style={`--ad-reserve:${reserved}px; --ad-reserve-mobile:${reservedMobile}px`} aria-label="إعلان">
     <span class="ad-unit-label">إعلان</span>
     <ins
         class="adsbygoogle"
@@ -35,15 +38,21 @@ const insStyle = layout === "in-article" ? "display:block; text-align:center;" :
         display: flex;
         flex-direction: column;
         gap: 6px;
+        min-height: var(--ad-reserve);
+    }
+
+    @media (max-width: 30rem) {
+        .ad-unit {
+            min-height: var(--ad-reserve-mobile);
+        }
     }
 
 
     .ad-unit-label {
         font-family: var(--monospace);
-        font-size: 10px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.3);
+        font-size: 11px;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.45);
     }
 </style>
 

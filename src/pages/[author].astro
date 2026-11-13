@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { QuoteRow } from "../components/QuoteCard";
 import AdUnit from "../components/AdUnit.astro";
+import { adAfterRow, LIST_AD_SLOTS } from "../utils/ads";
 import BreadcrumbSchema from "../components/schema/BreadcrumbSchema.astro";
 import QuoteSchema from "../components/schema/QuoteSchema.astro";
 import PersonSchema from "../components/schema/PersonSchema.astro";
@@ -148,16 +149,19 @@ const pageDescription = authorBooks.length > 0
       </section>
     )}
 
-    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
-
     <section class="section" aria-label={`كل اقتباسات ${author}`}>
       <div class="section-head">
         <h2>كل الاقتباسات</h2>
         <span class="see-all">{quotes.length}</span>
       </div>
       <ul role="list" class="quote-row-list">
-        {quotes.map((quote) => (
-          <QuoteRow client:visible quote={quote} showAuthor={false} />
+        {quotes.map((quote, i) => (
+          <Fragment>
+            <QuoteRow client:visible quote={quote} showAuthor={false} />
+            {adAfterRow(i, quotes.length) && (
+              <li class="qrow-ad"><AdUnit slot={LIST_AD_SLOTS.author} format="fluid" layout="in-article" /></li>
+            )}
+          </Fragment>
         ))}
       </ul>
     </section>

@@ -2,6 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import { QuoteRow } from "../../components/QuoteCard";
 import AdUnit from "../../components/AdUnit.astro";
+import { adAfterRow, LIST_AD_SLOTS } from "../../utils/ads";
 import BreadcrumbSchema from "../../components/schema/BreadcrumbSchema.astro";
 import QuoteSchema from "../../components/schema/QuoteSchema.astro";
 import BookSchema from "../../components/schema/BookSchema.astro";
@@ -135,16 +136,19 @@ const breadcrumbs = [
       </div>
     </header>
 
-    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
-
     <section class="section" aria-label={`اقتباسات من كتاب ${book}`}>
       <div class="section-head">
         <h2>اقتباسات من «{book}»</h2>
         <span class="see-all">{quotes.length}</span>
       </div>
       <ul role="list" class="quote-row-list">
-        {quotes.map((quote) => (
-          <QuoteRow client:visible quote={quote} showAuthor={false} showBook={false} />
+        {quotes.map((quote, i) => (
+          <Fragment>
+            <QuoteRow client:visible quote={quote} showAuthor={false} showBook={false} />
+            {adAfterRow(i, quotes.length) && (
+              <li class="qrow-ad"><AdUnit slot={LIST_AD_SLOTS.book} format="fluid" layout="in-article" /></li>
+            )}
+          </Fragment>
         ))}
       </ul>
     </section>

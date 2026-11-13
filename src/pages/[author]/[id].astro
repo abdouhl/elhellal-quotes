@@ -184,8 +184,8 @@ const pageDescription = quote.book
     </div>
 
     <!-- Ads sit below the whole quote card (share row included) so they're never next to a tappable share button. -->
-    <div class="adsense-slot" aria-label="Advertisement">
-      <AdUnit slot="2951250905" minHeight={250} />
+    <div class="adsense-slot">
+      <AdUnit slot="2951250905" minHeight={250} mobileMinHeight={280} />
     </div>
 
     {otherQuotes.length > 0 && (
@@ -207,7 +207,7 @@ const pageDescription = quote.book
       </section>
     )}
 
-    <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />
+    {otherQuotes.length >= 3 && <AdUnit slot="8525183818" format="fluid" layout="in-article" className="quote-page-ad" />}
   </main>
 
   <script>
