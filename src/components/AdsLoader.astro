@@ -2,9 +2,9 @@
 // Ad loader shared by the elhellal sister sites (ported from elhellal.com's Layout).
 // Funding Choices (Google's consent platform: the GDPR message in AdSense › Privacy &
 // messaging) runs first, then AdSense, so the consent API (__tcfapi) exists before any
-// ad request. Both load on the first scroll/tap/key press, or 3s after load once the
-// browser is idle, so they don't compete with first paint. adsbygoogle.push({}) calls
-// made before that just queue.
+// ad request. Both start loading immediately (async, so they don't block paint): these
+// sites get short visits, and waiting for a scroll or 3s of idle lost the ads of
+// visitors who left early. adsbygoogle.push({}) calls made before then just queue.
 //
 // Flags on <html>: data-no-ads on noindex pages (low-value for AdSense, slots hidden),
 // data-ads-blocked when the script fails (blocker), which collapses the reserved boxes.
@@ -34,7 +34,6 @@
             f.name = "googlefcPresent";
             document.body.appendChild(f);
         })();
-        var events = ["scroll", "pointerdown", "keydown", "touchstart"];
         var started = false;
         function inject(src, crossOrigin, done) {
             var s = document.createElement("script");
@@ -47,9 +46,6 @@
         function start() {
             if (started) return;
             started = true;
-            events.forEach(function (e) {
-                window.removeEventListener(e, start, { passive: true });
-            });
             inject("https://fundingchoicesmessages.google.com/i/pub-3610150616518651?ers=1", false, function () {
                 inject("https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3610150616518651", true, function (ev) {
                     if (ev && ev.type === "error") {
@@ -59,17 +55,7 @@
                 });
             });
         }
-        events.forEach(function (e) {
-            window.addEventListener(e, start, { passive: true });
-        });
-        function whenIdle() {
-            setTimeout(function () {
-                if (window.requestIdleCallback) window.requestIdleCallback(start, { timeout: 2000 });
-                else start();
-            }, 3000);
-        }
-        if (document.readyState === "complete") whenIdle();
-        else window.addEventListener("load", whenIdle);
+        start();
     })();
 </script>
 
