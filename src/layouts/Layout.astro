@@ -57,6 +57,19 @@ const navLinks = [
     { href: "/books/", label: "الكتب", active: path.startsWith("/book") },
     { href: "/tags/", label: "المواضيع", active: path.startsWith("/tag") },
 ];
+
+/** "<title> | الهلال", the suffix added once and the whole kept within 70 characters (Bing truncates longer titles). */
+function fullTitle(title: string): string {
+    const SUFFIX = " | الهلال";
+    const max = 70 - SUFFIX.length;
+    let core = title.replace(/\s*\|\s*الهلال\s*$/, "").trim();
+    if (core.length > max) {
+        const cut = core.slice(0, max - 1);
+        const space = cut.lastIndexOf(" ");
+        core = `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[،,.:;!؟?\-–—|"«\s]+$/, "")}…`;
+    }
+    return `${core}${SUFFIX}`;
+}
 ---
 
 <!doctype html>
@@ -81,7 +94,7 @@ const navLinks = [
         <title>
             {
                 pageTitle
-                    ? `${pageTitle} | الهلال`
+                    ? fullTitle(pageTitle)
                     : `${site} — أجمل الاقتباسات العربية من أشهر الكتّاب والكتب`
             }
         </title>

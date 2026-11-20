@@ -28,7 +28,8 @@ const otherBooksByAuthor = getQuoteBooks()
   .filter((b) => b.authorSlug === authorSlug && b.slug !== bookSlug)
   .slice(0, 8);
 
-const pageDescription = `${quotes.length} اقتباساً من كتاب "${book}" لـ${author}، مترجماً إلى العربية.`;
+const quoteCount = quotes.length === 1 ? "اقتباس" : quotes.length === 2 ? "اقتباسان" : quotes.length <= 10 ? `${quotes.length} اقتباسات` : `${quotes.length} اقتباساً`;
+const pageDescription = `${quoteCount} من كتاب «${book}» لـ${author}، ${quotes.length === 1 ? "مترجم" : "مترجمة"} إلى العربية${otherBooksByAuthor.length ? "، مع كتب أخرى للكاتب نفسه" : ""}، وروابط للبحث عن الكتاب على أمازون وجودريدز.`;
 
 // Header facts built from the page's own data: size, total likes, and the
 // topics its quotes are tagged with most (no invented blurb).

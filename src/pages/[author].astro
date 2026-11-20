@@ -56,9 +56,17 @@ const breadcrumbs = [
   { name: author },
 ];
 
+const n = quotes.length;
+const quoteCount = n === 1 ? "اقتباس" : n === 2 ? "اقتباسان" : n <= 10 ? `${n} اقتباسات` : `${n} اقتباساً`;
+const bookCount = authorBooks.length === 1 ? "كتاب واحد" : authorBooks.length === 2 ? "كتابين" : authorBooks.length <= 10 ? `${authorBooks.length} كتب` : `${authorBooks.length} كتاباً`;
+const describe = (k: number) => {
+  const sampleBooks = authorBooks.slice(0, k).map((b) => `«${b.book}»`).join(" و");
+  return `${quoteCount} لـ${author} بالعربية من ${bookCount}${authorBooks.length > 1 ? `، منها ${sampleBooks}` : `: ${sampleBooks}`}، مع صفحة لكل اقتباس وروابط لكتب الكاتب على الهلال.`;
+};
+// Search engines want ~150 characters: say which books, not just how many (as many titles as fit).
 const pageDescription = authorBooks.length > 0
-  ? `${quotes.length} اقتباساً لـ${author} مترجماً إلى العربية، من ${authorBooks.length} ${authorBooks.length === 1 ? 'كتاب' : 'كتب'} ومن أقواله المباشرة.`
-  : `${quotes.length} اقتباساً لـ${author} مترجماً إلى العربية.`;
+  ? ([3, 2].map(describe).find((d) => d.length <= 165) ?? describe(1))
+  : `${quoteCount} لـ${author} بالعربية، مع صفحة لكل اقتباس لقراءته ومشاركته، واقتباسات مشابهة من كتّاب آخرين على الهلال.`;
 ---
 
 <Layout
